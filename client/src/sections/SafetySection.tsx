@@ -1,5 +1,132 @@
-import { BadgeCheck, Check, Fingerprint, Heart, LockKeyhole, ShieldCheck, Star } from 'lucide-react'
-import { SectionHeading } from '../components/SectionHeading'
+import {
+    BadgeCheck,
+    Check,
+    Fingerprint,
+    Heart,
+    LockKeyhole,
+    ShieldCheck,
+    Star,
+} from 'lucide-react';
+import { SectionHeading } from '../components/SectionHeading';
 
-const pillars=[{icon:Fingerprint,title:'Identity, thoughtfully checked',text:'Verification gives people confidence that profiles belong to real travellers.'},{icon:Star,title:'Trust built over time',text:'Ratings and completed trips add context beyond a single number.'},{icon:ShieldCheck,title:'Support along the way',text:'Safety tools are part of the journey, with more support planned as we grow.'}]
-export function SafetySection(){return <section className="section safety-section" id="safety"><div className="container safety-layout"><div className="safety-copy"><SectionHeading eyebrow="Confidence, by design" title="Trust should be easy to see—and easy to understand." description="Useful signals help you make an informed choice while personal details stay private."/><div className="safety-pillars">{pillars.map(p=><article key={p.title}><span><p.icon size={18}/></span><div><h3>{p.title}</h3><p>{p.text}</p></div></article>)}</div><a className="text-link" href="#trust">Explore our approach to trust <span>→</span></a></div><div className="profile-scene"><div className="profile-backdrop"><span>W</span><span>GOOD PEOPLE. GOOD MILES.</span></div><article className="profile-card"><div className="profile-card-top"><span className="verified-label"><BadgeCheck size={15}/> SAMPLE PROFILE · VERIFIED</span><button aria-label="Save driver preview" type="button"><Heart size={17}/></button></div><div className="profile-person"><div className="profile-initial">A</div><div><h3>Alex Morgan</h3><p>Driving since 2021</p></div></div><div className="profile-stats"><div><strong>94<span>/100</span></strong><small>Trust score</small></div><div><strong>4.8 <Star size={13} fill="currentColor"/></strong><small>Traveller rating</small></div><div><strong>86</strong><small>Trips completed</small></div></div><div className="license-row"><span><LockKeyhole size={16}/></span><span><b>Driving licence</b><small>Sample verification state</small></span><Check size={17} className="license-check"/></div><p className="privacy-note"><LockKeyhole size={12}/> Personal documents are never shown</p></article><div className="profile-caption"><ShieldCheck size={16}/> Built around meaningful signals</div></div></div></section>}
+const pillars = [
+    {
+        icon: Fingerprint,
+        title: 'Identity, thoughtfully checked',
+        text: 'Verification gives people confidence that profiles belong to real travellers.',
+    },
+    {
+        icon: Star,
+        title: 'Trust built over time',
+        text: 'Ratings and completed trips add context beyond a single number.',
+    },
+    {
+        icon: ShieldCheck,
+        title: 'Support along the way',
+        text: 'Safety tools are part of the journey, with more support planned as we grow.',
+    },
+];
+export function SafetySection() {
+    return (
+        <section
+            className='section safety-section'
+            id='safety'
+        >
+            <div className='container safety-layout'>
+                <div className='safety-copy'>
+                    <SectionHeading
+                        eyebrow='Confidence, by design'
+                        title='Trust should be easy to see—and easy to understand.'
+                        description='Useful signals help you make an informed choice while personal details stay private.'
+                    />
+                    <div className='safety-pillars'>
+                        {pillars.map((p) => (
+                            <article key={p.title}>
+                                <span>
+                                    <p.icon size={18} />
+                                </span>
+                                <div>
+                                    <h3>{p.title}</h3>
+                                    <p>{p.text}</p>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                    <a
+                        className='text-link'
+                        href='#trust'
+                    >
+                        Explore our approach to trust <span>→</span>
+                    </a>
+                </div>
+                <div className='profile-scene'>
+                    <div className='profile-backdrop'>
+                        <span>W</span>
+                        <span>GOOD PEOPLE. GOOD MILES.</span>
+                    </div>
+                    <article className='profile-card'>
+                        <div className='profile-card-top'>
+                            <span className='verified-label'>
+                                <BadgeCheck size={15} /> SAMPLE PROFILE · VERIFIED
+                            </span>
+                            <button
+                                aria-label='Save driver preview'
+                                type='button'
+                            >
+                                <Heart size={17} />
+                            </button>
+                        </div>
+                        <div className='profile-person'>
+                            <div className='profile-initial'>A</div>
+                            <div>
+                                <h3>Shubham Sawant</h3>
+                                <p>Driving since 2021</p>
+                            </div>
+                        </div>
+                        <div className='profile-stats'>
+                            <div>
+                                <strong>
+                                    94<span>/100</span>
+                                </strong>
+                                <small>Trust score</small>
+                            </div>
+                            <div>
+                                <strong>
+                                    4.8{' '}
+                                    <Star
+                                        size={13}
+                                        fill='currentColor'
+                                    />
+                                </strong>
+                                <small>Traveller rating</small>
+                            </div>
+                            <div>
+                                <strong>86</strong>
+                                <small>Trips completed</small>
+                            </div>
+                        </div>
+                        <div className='license-row'>
+                            <span>
+                                <LockKeyhole size={16} />
+                            </span>
+                            <span>
+                                <b>Driving licence</b>
+                                <small>Sample verification state</small>
+                            </span>
+                            <Check
+                                size={17}
+                                className='license-check'
+                            />
+                        </div>
+                        <p className='privacy-note'>
+                            <LockKeyhole size={12} /> Personal documents are never shown
+                        </p>
+                    </article>
+                    <div className='profile-caption'>
+                        <ShieldCheck size={16} /> Built around meaningful signals
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}

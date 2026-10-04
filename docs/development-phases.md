@@ -10,7 +10,7 @@ Deliver the responsive public landing page with static demonstrations of the pro
 
 ## Phase 2 — Authentication
 
-Add secure registration, login, sessions/tokens, user profiles, and passenger/driver/admin authorization.
+Implemented: Passenger/Driver registration, login, Admin login via provisioned accounts, bcrypt password hashes, rotating JWT sessions, role-aware protected client routes, server authentication/authorization middleware, a safe profile read and display-name update, and the MongoDB user model. Verification and ride features remain in later phases.
 
 ## Phase 3 — Verification
 

@@ -1,0 +1,316 @@
+.verification-card {
+    display: grid;
+    gap: 14px;
+    margin-top: 24px;
+    padding: 20px;
+    border: 1px solid #eadfe3;
+    background: #fcf9fa;
+}
+.verification-heading {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+.verification-icon {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    color: #7e3854;
+    background: #f3e6eb;
+}
+.verification-heading .eyebrow {
+    font-size: 7px;
+    color: #87516a;
+}
+.verification-heading h2 {
+    margin: 4px 0 0;
+    color: #352431;
+    font: 500 20px/1.2 var(--serif);
+}
+.verified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: auto;
+    padding: 6px 8px;
+    color: #6f2947;
+    background: #f2e4ea;
+    font-size: 9px;
+    font-weight: 700;
+}
+.verification-copy,
+.verification-privacy,
+.verification-hint {
+    margin: 0;
+    color: #786a72;
+    font-size: 10px;
+    line-height: 1.7;
+}
+.verification-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border: 1px solid #eadfe3;
+    color: #7a3853;
+    background: #fff;
+}
+.verification-status > span {
+    display: grid;
+    gap: 3px;
+}
+.verification-status small {
+    color: #8e7983;
+    font-size: 7px;
+    letter-spacing: 1px;
+}
+.verification-status strong {
+    color: #493442;
+    font-size: 10px;
+}
+.verification-status-approved {
+    border-color: #d9c5cf;
+    background: #f7eff2;
+}
+.verification-form {
+    display: grid;
+    gap: 12px;
+}
+.verification-file {
+    display: block;
+    width: 100%;
+    padding: 11px;
+    border: 1px solid #e5d9df;
+    color: #493442;
+    background: #fff;
+    font: inherit;
+    font-size: 10px;
+}
+.verification-file::file-selector-button {
+    margin-right: 10px;
+    padding: 7px 9px;
+    border: 1px solid #e5d9df;
+    color: #6d3049;
+    background: #fcf8fa;
+    font: inherit;
+    cursor: pointer;
+}
+.verification-submit {
+    width: 100%;
+    min-height: 40px;
+}
+.verification-submit:disabled,
+.verification-review-actions button:disabled,
+.verification-document-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+.verification-privacy {
+    border-top: 1px solid #eee5e8;
+    padding-top: 11px;
+    color: #8a7b83;
+    font-size: 9px;
+}
+.verification-hint {
+    padding: 10px 12px;
+    color: #6d3049;
+    background: #f5eaf0;
+}
+.verification-admin-page {
+    min-height: 100vh;
+}
+.admin-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #71314c;
+    font-size: 10px;
+    font-weight: 600;
+}
+.verification-admin-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.verification-admin-wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 42px 24px 72px;
+}
+.verification-admin-wrap > .eyebrow {
+    color: #87516a;
+    font-size: 8px;
+    letter-spacing: 1.2px;
+}
+.verification-admin-wrap > h1 {
+    margin: 8px 0 0;
+    color: #352431;
+    font: 500 34px/1.1 var(--serif);
+}
+.verification-admin-intro {
+    max-width: 600px;
+    margin: 12px 0 24px;
+    color: #786a72;
+    font-size: 11px;
+    line-height: 1.7;
+}
+.verification-filter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    color: #493442;
+    font-size: 10px;
+    font-weight: 600;
+}
+.verification-filter select {
+    min-height: 38px;
+    min-width: 210px;
+    padding: 0 10px;
+    border: 1px solid #e5d9df;
+    color: #493442;
+    background: #fff;
+    font: inherit;
+}
+.verification-queue {
+    display: grid;
+    gap: 14px;
+}
+.verification-submission {
+    padding: 20px;
+    border: 1px solid #eadfe3;
+    background: #fff;
+    box-shadow: 0 12px 32px #38212a08;
+}
+.verification-submission-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+.verification-submission-head .eyebrow {
+    color: #87516a;
+    font-size: 7px;
+    letter-spacing: 1px;
+}
+.verification-submission-head h2 {
+    margin: 5px 0 3px;
+    color: #352431;
+    font: 500 20px/1.15 var(--serif);
+}
+.verification-submission-head p,
+.verification-submission-meta {
+    margin: 0;
+    color: #786a72;
+    font-size: 9px;
+}
+.verification-chip {
+    padding: 6px 8px;
+    color: #6d3049;
+    background: #f5eaf0;
+    font-size: 8px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.verification-chip-approved {
+    background: #f1e8ec;
+}
+.verification-chip-rejected {
+    color: #673248;
+    background: #f5e7eb;
+}
+.verification-submission-meta {
+    margin: 13px 0;
+}
+.verification-submission-meta p {
+    margin: 6px 0 0;
+    color: #6d3049;
+}
+.verification-document-button,
+.verification-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0 11px;
+    border: 1px solid #e5d9df;
+    color: #6d3049;
+    background: #fcf8fa;
+    font: inherit;
+    font-size: 9px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.verification-review-note {
+    margin-top: 15px;
+}
+.verification-review-note textarea {
+    min-height: 68px;
+    padding: 10px;
+    resize: vertical;
+    border: 1px solid #e5d9df;
+    color: #493442;
+    font: inherit;
+    font-size: 10px;
+}
+.verification-review-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+.verification-action-approve {
+    border-color: #7e3854;
+    color: #fff;
+    background: #742b49;
+}
+.verification-action-reject {
+    color: #6e3047;
+    background: #f8f0f3;
+}
+.verification-empty {
+    padding: 22px;
+    border: 1px solid #eadfe3;
+    color: #786a72;
+    background: #fff;
+    font-size: 10px;
+}
+.verification-card :focus-visible,
+.verification-admin-page :focus-visible {
+    outline: 2px solid #7e3854;
+    outline-offset: 3px;
+}
+@media (max-width: 520px) {
+    .verification-card {
+        padding: 16px;
+    }
+    .verification-admin-wrap {
+        padding: 28px 16px 50px;
+    }
+    .verification-admin-actions {
+        gap: 8px;
+    }
+    .verification-admin-wrap > h1 {
+        font-size: 29px;
+    }
+    .verification-filter {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 7px;
+    }
+    .verification-filter select {
+        width: 100%;
+    }
+    .verification-submission {
+        padding: 16px;
+    }
+    .verification-submission-head {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .verification-review-actions {
+        display: grid;
+    }
+}

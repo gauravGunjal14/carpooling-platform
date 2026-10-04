@@ -1,5 +1,72 @@
-import { ArrowDownRight, ArrowRight, MapPinned, Search, ShieldCheck, TicketCheck } from 'lucide-react'
-import { SectionHeading } from '../components/SectionHeading'
+import { ArrowRight, MapPinned, Search, ShieldCheck, TicketCheck } from 'lucide-react';
+import { SectionHeading } from '../components/SectionHeading';
 
-const steps = [{n:'01', icon:Search, title:'Find your fit', text:'Search by route and date. We’ll bring the most compatible rides to the top.'},{n:'02', icon:ShieldCheck, title:'Compare with care', text:'See verification, ratings, and trust signals before you decide.'},{n:'03', icon:TicketCheck, title:'Book your seat', text:'Choose your seat and request a place on the ride that feels right.'},{n:'04', icon:MapPinned, title:'Enjoy the journey', text:'Meet your fellow travellers and make the miles a little lighter.'}]
-export function HowItWorks() { return <section className="section how-section" id="how-it-works"><div className="container"><div className="how-top"><SectionHeading eyebrow="A simpler way to share the road" title="From here to there,\nwith a little more care." description="A good carpool starts with a good match. We make each step feel considered."/><div className="how-route"><span>YOUR NEXT TRIP</span><div><i/><b/><i/></div><ArrowDownRight size={18}/></div></div><div className="steps-grid">{steps.map((step,i)=><article className="step-card" key={step.n}><div className="step-top"><span>{step.n} / 04</span><step.icon size={20}/></div><h3>{step.title}</h3><p>{step.text}</p>{i<3 && <ArrowRight className="step-arrow" size={19}/>}<div className="step-progress"><span style={{width:`${(i+1)*25}%`}}/></div></article>)}</div></div></section> }
+const steps = [
+    {
+        n: '01',
+        icon: Search,
+        title: 'Find your fit',
+        text: 'Search by route and date. We’ll bring the most compatible rides to the top.',
+    },
+    {
+        n: '02',
+        icon: ShieldCheck,
+        title: 'Compare with care',
+        text: 'See verification, ratings, and trust signals before you decide.',
+    },
+    {
+        n: '03',
+        icon: TicketCheck,
+        title: 'Book your seat',
+        text: 'Choose your seat and request a place on the ride that feels right.',
+    },
+    {
+        n: '04',
+        icon: MapPinned,
+        title: 'Enjoy the journey',
+        text: 'Meet your fellow travellers and make the miles a little lighter.',
+    },
+];
+
+export function HowItWorks() {
+    return (
+        <section
+            className='section how-section'
+            id='how-it-works'
+        >
+            <div className='container'>
+                <div className='how-top'>
+                    <SectionHeading
+                        eyebrow='A simpler way to share the road'
+                        title='From here to there, with a little more care.'
+                        description='A good carpool starts with a good match. We make each step feel considered.'
+                    />
+                </div>
+                <div className='steps-grid'>
+                    {steps.map((step, i) => (
+                        <article
+                            className='step-card'
+                            key={step.n}
+                        >
+                            <div className='step-top'>
+                                <span>{step.n} / 04</span>
+                                <step.icon size={20} />
+                            </div>
+                            <h3>{step.title}</h3>
+                            <p>{step.text}</p>
+                            {i < 3 && (
+                                <ArrowRight
+                                    className='step-arrow'
+                                    size={19}
+                                />
+                            )}
+                            <div className='step-progress'>
+                                <span style={{ width: `${(i + 1) * 25}%` }} />
+                            </div>
+                        </article>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+}

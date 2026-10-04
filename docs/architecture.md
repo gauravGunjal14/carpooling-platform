@@ -2,15 +2,21 @@
 
 ## Current foundation
 
-The repository uses an npm workspaces monorepo so the React client and Express service can be developed, typechecked, and built independently. Shared TypeScript types can be introduced when real API contracts exist; the current landing page uses static demonstration data only.
+The repository uses an npm workspaces monorepo so the React client and Express service can be developed, typechecked, and built independently. The landing page still uses static demonstration data. Phase 2 adds MongoDB-backed accounts and a JSON API for authentication and a basic profile.
 
 ## Client and server separation
 
-`client/` contains the Vite, React, TypeScript, Tailwind CSS, and React Router application. Page composition, reusable components, sections, static data, and types live in separate folders. `server/` contains the Node.js and Express TypeScript service foundation. It currently has no product routes or business logic.
+`client/` contains the Vite, React, TypeScript, Tailwind CSS, and React Router application. Page composition, reusable components, sections, static data, and types live in separate folders. `server/` contains the Node.js and Express TypeScript API, configuration, middleware, Mongoose models, controllers, routes, and services.
+
+## Authentication and roles
+
+Public registration accepts Passenger and Driver only. Admin accounts are provisioned with the `npm run create-admin` command and environment variables. Passwords are bcrypt-hashed and never returned. Access JWTs are short-lived and held in client memory; refresh JWTs are rotated and stored only as SHA-256 hashes on the user record, and delivered in an HTTP-only, SameSite Strict cookie. This initial implementation permits one active refresh session per account; signing in again replaces it. Roles are read from the current database account by authentication middleware, and the `authorize` middleware provides server-side role gates for later role-specific APIs. Client route guards are a navigation aid, not the security boundary.
+
+`GET /api/auth/me` returns the signed-in user’s safe profile. `PATCH /api/auth/me` currently permits the account holder to update only their display name. Email and role changes are intentionally outside this phase.
 
 ## Future API layer
 
-Add versioned Express routes, request validation, controllers, and services in later phases. Keep transport concerns in controllers and domain rules in services. API request/response types should become the contract consumed by a client API module; the UI should not depend directly on persistence models.
+Add versioned Express routes, request validation, controllers, and services in later phases. Keep transport concerns in controllers and domain rules in services. The client API module consumes JSON request/response contracts; the UI does not depend directly on persistence models.
 
 ## Future data layer
 

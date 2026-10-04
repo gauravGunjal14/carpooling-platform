@@ -1,3 +1,46 @@
-import { ArrowRight, BadgeCheck, CalendarClock, TrendingUp } from 'lucide-react'
+import { ArrowRight, BadgeCheck, CalendarClock, TrendingUp } from 'lucide-react';
 
-export function ProSection(){return <section className="pro-section" id="pro-section"><div className="container pro-banner"><div className="pro-mark"><span>W</span><i>✳</i></div><div className="pro-copy"><span className="eyebrow">WAYFARE PRO · COMING LATER</span><h2>A little more flexibility for frequent travellers.</h2><p>Priority ride visibility, added cancellation flexibility, and thoughtful extras for people who ride often.</p></div><div className="pro-perks"><span><TrendingUp size={16}/> Priority listing</span><span><CalendarClock size={16}/> Flexible cancellations</span><span><BadgeCheck size={16}/> Premium visibility</span></div><a className="pro-link" href="#get-started" aria-label="Get notified about Wayfare Pro"><ArrowRight size={20}/></a><small className="pro-note">Benefits and pricing are not finalized.</small></div></section>}
+export function ProSection() {
+    return (
+        <section
+            className='pro-section'
+            id='pro-section'
+        >
+            <div className='container pro-banner'>
+                <div className='pro-mark'>
+                    <span>W</span>
+                    <i>✳</i>
+                </div>
+                <div className='pro-copy'>
+                    <span className='eyebrow'>WAYFARE PRO · COMING LATER</span>
+                    <h2>A little more flexibility for frequent travellers.</h2>
+                    <p>
+                        Priority ride visibility, added cancellation flexibility, and
+                        thoughtful extras for people who ride often.
+                    </p>
+                </div>
+                <div className='pro-perks'>
+                    <span>
+                        <TrendingUp size={16} /> Priority listing
+                    </span>
+                    <span>
+                        <CalendarClock size={16} /> Flexible cancellations
+                    </span>
+                    <span>
+                        <BadgeCheck size={16} /> Premium visibility
+                    </span>
+                </div>
+                <a
+                    className='pro-link'
+                    href='#get-started'
+                    aria-label='Get notified about Wayfare Pro'
+                >
+                    <ArrowRight size={20} />
+                </a>
+                <small className='pro-note'>
+                    Benefits and pricing are not finalized.
+                </small>
+            </div>
+        </section>
+    );
+}

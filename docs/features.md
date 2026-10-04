@@ -8,7 +8,7 @@ Introduces the service, passenger and driver journeys, matching concept, trust a
 
 ## Accounts and roles
 
-Passengers, drivers, and administrators will have secure accounts, profiles, authentication, and role-based authorization.
+Passenger and Driver registration, login, JWT sessions, and a basic editable display-name profile are implemented in Phase 2. Admin can log in after secure CLI provisioning and is never self-selected at public signup. Role-based access is checked on the server and client routes. Email verification, password reset, and changes to email/role are not part of this phase.
 
 ## Ride and booking management
 

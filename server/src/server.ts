@@ -1,12 +1,61 @@
-import 'dotenv/config'
-import cors from 'cors'
-import express from 'express'
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import express from 'express';
+import helmet from 'helmet';
+import { connectDatabase } from './config/database.js';
+import { env } from './config/env.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import authRoutes from './routes/authRoutes.js';
+import verificationRoutes from './routes/verificationRoutes.js';
 
-const app = express()
-const port = Number(process.env.PORT ?? 4000)
+const app = express();
+app.disable('x-powered-by');
+app.use(helmet());
+app.use(
+    cors({
+        origin: env.CLIENT_ORIGIN,
+        credentials: true,
+        methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Authorization', 'Content-Type'],
+    }),
+);
+app.use(express.json({ limit: '16kb' }));
+app.use(cookieParser());
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173' }))
-app.use(express.json())
+app.get('/health', (_request, response) => response.json({ status: 'ok' }));
+app.use('/api/auth', authRoutes);
+app.use('/api/verification', verificationRoutes);
+app.use((_request, response) =>
+    response
+        .status(404)
+        .json({ error: { code: 'NOT_FOUND', message: 'Route not found.' } }),
+);
+app.use(errorHandler);
 
-// Product routes and business logic will be introduced in later phases.
-app.listen(port, () => console.info(`Carpooling service foundation listening on port ${port}`))
+async function start(): Promise<void> {
+    try {
+        await connectDatabase();
+    } catch (error) {
+        const errorName = error instanceof Error ? error.name : 'UnknownError';
+        console.error(
+            `Could not connect to MongoDB (${errorName}). Check MONGODB_URI and database availability.`,
+        );
+        process.exitCode = 1;
+        return;
+    }
+
+    const server = app.listen(env.PORT, () =>
+        console.info(`Authentication API listening on port ${env.PORT}`),
+    );
+    const shutdown = (): void => {
+        server.close(() => {
+            void import('mongoose')
+                .then(({ default: mongoose }) => mongoose.disconnect())
+                .finally(() => process.exit(0));
+        });
+    };
+    process.once('SIGINT', shutdown);
+    process.once('SIGTERM', shutdown);
+}
+
+void start();
