@@ -1,0 +1,28 @@
+import { Router } from 'express';
+import {
+    adminRideController,
+    adminRidesController,
+    cancelRideController,
+    createRideController,
+    myRideController,
+    myRidesController,
+    passengerRideController,
+    searchRidesController,
+    updateRideController,
+} from '../controllers/rideController.js';
+import { authenticate, authorize } from '../middleware/authenticate.js';
+
+const router = Router();
+
+router.use(authenticate);
+router.post('/', authorize('Driver'), createRideController);
+router.get('/mine', authorize('Driver'), myRidesController);
+router.get('/mine/:id', authorize('Driver'), myRideController);
+router.patch('/mine/:id', authorize('Driver'), updateRideController);
+router.patch('/mine/:id/cancel', authorize('Driver'), cancelRideController);
+router.get('/search', authorize('Passenger'), searchRidesController);
+router.get('/admin', authorize('Admin'), adminRidesController);
+router.get('/admin/:id', authorize('Admin'), adminRideController);
+router.get('/:id', authorize('Passenger'), passengerRideController);
+
+export default router;

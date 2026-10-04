@@ -10,13 +10,15 @@ Introduces the service, passenger and driver journeys, matching concept, trust a
 
 Passenger and Driver registration, login, JWT sessions, and a basic editable display-name profile are implemented in Phase 2. Admin can log in after secure CLI provisioning and is never self-selected at public signup. Role-based access is checked on the server and client routes. Email verification, password reset, and changes to email/role are not part of this phase.
 
-## Ride and booking management
+## Ride management and search (Phase 4)
 
-Drivers will create, edit, cancel, and manage rides and requests. Passengers will search, select seats, book, cancel, and view booking history. Backend authorization will govern every action.
+Drivers can create, view, edit, and cancel their own scheduled rides. Pickup and destination store a selected display name, latitude, longitude, normalized exact-place key, and GeoJSON point. Date/time, 1–6 seats, smoking preference, luggage preference, notes, and Women-only status are validated on the server. Passengers can filter upcoming available rides by exact selected place, date, approximate departure time, and seats; ride detail cards show driver display name and server-derived driving-licence verification only. Admins have read-only ride APIs. There are no bookings, seat reservations, notifications, refunds, or cancellation penalties in this phase.
+
+Women-only ride creation requires an Admin-granted flag on an approved driving-licence verification. Passenger search and detail access require an Admin-granted flag on an approved identity verification. No gender attribute is stored. The server enforces these checks; UI state is only a convenience.
 
 ## Smart matching
 
-Location autocomplete will use OpenStreetMap/Nominatim, with Leaflet maps and coordinate-aware matching. Candidate rides will account for distance, route, departure time, available seats, suitable preferences, ratings, trust signals, and booking history. The intended radius is 30 km. A later service will rank rides and explain recommendations.
+Explicit public-place search uses a rate-conscious server proxy to OpenStreetMap/Nominatim; users deliberately submit a place query instead of sending each keystroke as autocomplete. Leaflet previews show selected coordinates and a simple connection line. Phase 5 will add coordinate proximity, route compatibility, time and seat matching, ratings, trust signals, booking history, and explainable ranking. The intended radius is 30 km.
 
 ## Women-only rides
 

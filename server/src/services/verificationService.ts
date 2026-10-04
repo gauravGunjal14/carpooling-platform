@@ -59,7 +59,7 @@ export async function submitVerificationDocument(
             status: { $in: ['rejected', 'resubmission_required'] },
         },
         {
-            $set: { status: 'pending', ...document },
+            $set: { status: 'pending', womenOnlyEligible: false, ...document },
             $unset: { reviewedBy: 1, reviewedAt: 1, reviewNote: 1 },
         },
         { new: true, runValidators: true },
@@ -80,7 +80,7 @@ export async function getOwnVerification(user: SafeUser) {
     const submission = await VerificationSubmission.findOne({
         userId: user.id,
         documentType,
-    }).select('documentType status createdAt reviewedAt +reviewNote');
+    }).select('documentType status createdAt reviewedAt +reviewNote +womenOnlyEligible');
 
     return {
         role: user.role,
@@ -90,6 +90,8 @@ export async function getOwnVerification(user: SafeUser) {
         submittedAt: submission?.createdAt ?? null,
         reviewedAt: submission?.reviewedAt ?? null,
         reviewNote: submission?.reviewNote ?? null,
+        womenOnlyEligible:
+            submission?.status === 'approved' && submission.womenOnlyEligible === true,
     };
 }
 
@@ -97,7 +99,9 @@ export async function listVerificationSubmissions(status?: VerificationStatus) {
     const records = await VerificationSubmission.find(status ? { status } : {})
         .sort({ createdAt: -1 })
         .limit(100)
-        .select('userId documentType status reviewedAt createdAt +reviewNote')
+        .select(
+            'userId documentType status reviewedAt createdAt +reviewNote +womenOnlyEligible',
+        )
         .populate({ path: 'userId', select: 'name email role', model: User });
 
     return records.map((record) => {
@@ -111,6 +115,7 @@ export async function listVerificationSubmissions(status?: VerificationStatus) {
             id: record.id,
             documentType: record.documentType,
             status: record.status,
+            womenOnlyEligible: record.womenOnlyEligible,
             submittedAt: record.createdAt,
             reviewedAt: record.reviewedAt ?? null,
             reviewNote: record.reviewNote ?? null,
@@ -149,6 +154,7 @@ export async function reviewVerificationSubmission(
     reviewerId: string,
     status: Exclude<VerificationStatus, 'pending'>,
     reviewNote?: string,
+    womenOnlyEligible = false,
 ): Promise<void> {
     const submission = await VerificationSubmission.findOneAndUpdate(
         { _id: id, status: 'pending' },
@@ -158,6 +164,7 @@ export async function reviewVerificationSubmission(
                 reviewedBy: reviewerId,
                 reviewedAt: new Date(),
                 reviewNote: reviewNote ?? '',
+                womenOnlyEligible: status === 'approved' && womenOnlyEligible,
             },
         },
         { new: true, runValidators: true },

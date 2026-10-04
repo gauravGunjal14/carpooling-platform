@@ -23,6 +23,7 @@ const reviewSchema = z
     .object({
         status: z.enum(['approved', 'rejected', 'resubmission_required']),
         reviewNote: z.string().trim().max(500).optional(),
+        womenOnlyEligible: z.boolean().default(false),
     })
     .strict()
     .superRefine((input, context) => {
@@ -205,6 +206,7 @@ export const reviewSubmissionController: RequestHandler = asyncHandler(
             reviewer.id,
             input.status,
             input.reviewNote,
+            input.womenOnlyEligible,
         );
         response.json({ message: 'Verification review saved.' });
     },

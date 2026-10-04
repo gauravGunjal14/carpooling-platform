@@ -16,13 +16,13 @@ Implemented: Passenger/Driver registration, login, Admin login via provisioned a
 
 Add identity and driver licence submission, protected evidence handling, review workflows, and server-authoritative status.
 
-## Phase 4 — Ride management
+## Phase 4 — Ride management, locations & maps
 
-Add driver ride creation, editing, cancellation, seats, ride history, and booking-request management foundations.
+Add driver ride creation, editing, cancellation, seats, and ride history; passenger ride search and details; explicit OSM place search; and Leaflet route previews. Booking and seat reservation are not included.
 
 ## Phase 5 — Smart matching
 
-Add location autocomplete, maps, coordinate and route compatibility, time/seat filters, and explainable server-side ride ranking.
+Add coordinate-radius and route compatibility, proximity-aware time/seat filters, and explainable server-side ride ranking.
 
 ## Phase 6 — Booking
 

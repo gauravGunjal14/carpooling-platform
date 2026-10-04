@@ -24,6 +24,7 @@ type Verification = {
     submittedAt: string | null;
     reviewedAt: string | null;
     reviewNote: string | null;
+    womenOnlyEligible: boolean;
 };
 type Submission = {
     id: string;
@@ -32,6 +33,7 @@ type Submission = {
     submittedAt: string;
     reviewedAt: string | null;
     reviewNote: string | null;
+    womenOnlyEligible: boolean;
     applicant: { id: string; name: string; email: string; role: string } | null;
 };
 
@@ -153,6 +155,12 @@ export function VerificationPanel() {
                     </strong>
                 </span>
             </div>
+            {verification?.womenOnlyEligible && (
+                <p className='verification-eligibility-note'>
+                    <ShieldCheck size={14} /> Admin-approved for Women-only ride
+                    eligibility
+                </p>
+            )}
             {canSubmit && (
                 <form
                     className='verification-form'
@@ -236,6 +244,7 @@ export function AdminVerificationPage() {
     const [error, setError] = useState('');
     const [workingId, setWorkingId] = useState('');
     const [notes, setNotes] = useState<Record<string, string>>({});
+    const [eligibility, setEligibility] = useState<Record<string, boolean>>({});
 
     async function handleSignOut() {
         try {
@@ -303,7 +312,11 @@ export function AdminVerificationPage() {
         try {
             await request(`/api/verification/admin/submissions/${id}`, {
                 method: 'PATCH',
-                body: JSON.stringify({ status: decision, reviewNote: notes[id] ?? '' }),
+                body: JSON.stringify({
+                    status: decision,
+                    reviewNote: notes[id] ?? '',
+                    womenOnlyEligible: eligibility[id] ?? false,
+                }),
             });
             await loadQueue();
         } catch (cause) {
@@ -438,6 +451,26 @@ export function AdminVerificationPage() {
                                 </button>
                                 {submission.status === 'pending' && (
                                     <>
+                                        <label className='verification-review-eligibility'>
+                                            <input
+                                                type='checkbox'
+                                                checked={
+                                                    eligibility[submission.id] ??
+                                                    submission.womenOnlyEligible
+                                                }
+                                                onChange={(event) =>
+                                                    setEligibility((current) => ({
+                                                        ...current,
+                                                        [submission.id]:
+                                                            event.target.checked,
+                                                    }))
+                                                }
+                                            />
+                                            <span>
+                                                Grant eligibility for Women-only rides
+                                                after reviewing this document
+                                            </span>
+                                        </label>
                                         <label className='auth-field verification-review-note'>
                                             <span>
                                                 Review note{' '}

@@ -2,7 +2,7 @@
 
 ## Current foundation
 
-The repository uses an npm workspaces monorepo so the React client and Express service can be developed, typechecked, and built independently. The landing page still uses static demonstration data. Phase 2 adds MongoDB-backed accounts and a JSON API for authentication and a basic profile.
+The repository uses an npm workspaces monorepo so the React client and Express service can be developed, typechecked, and built independently. The landing page still uses static demonstration data. Phase 2 adds MongoDB-backed accounts; Phase 3 adds private verification submissions; Phase 4 adds ride management, place search, and maps.
 
 ## Client and server separation
 
@@ -16,11 +16,15 @@ Public registration accepts Passenger and Driver only. Admin accounts are provis
 
 ## Future API layer
 
-Add versioned Express routes, request validation, controllers, and services in later phases. Keep transport concerns in controllers and domain rules in services. The client API module consumes JSON request/response contracts; the UI does not depend directly on persistence models.
+Express routes, request validation, controllers, and services keep transport concerns separate from domain rules. The client API module consumes JSON request/response contracts; the UI does not depend directly on persistence models. Ride endpoints authorize roles on the server, and driver mutations are scoped to the authenticated driver id.
 
 ## Future data layer
 
-MongoDB and Mongoose models will be added when authentication and ride-management phases begin. Keep persistence behind service boundaries and enforce access control and privacy on the server.
+MongoDB/Mongoose models represent users, verification submissions, and rides. Ride locations store a display label, latitude/longitude, normalized exact-place search keys, and GeoJSON points with geospatial indexes for future matching. Current search filters exact selected place labels and date/time/seats; Phase 5 adds proximity and route compatibility. Ride search responses expose only the driver's display name and server-derived driving-licence verification status.
+
+## Place search and maps
+
+The API proxies explicit place searches to public Nominatim requests using a recognizable application User-Agent, response caching, request coalescing, and a process-wide 1.1-second minimum request interval. The UI requires a deliberate search action; it does not issue Nominatim requests for every keystroke because the public service prohibits autocomplete usage. Do not send residential addresses, personal details, or confidential material. The Leaflet preview uses standard visible map tiles with attribution and an approximate straight-line connection; it does not calculate a navigable or matched route. Nominatim and tile services can be switched later through service/configuration boundaries.
 
 ## Future Socket.io layer
 
@@ -36,4 +40,4 @@ Keep trust inputs transparent, behavior-based, and separate from identity attrib
 
 ## Future verification system
 
-Verification state must be authoritative on the server, with least-privilege access to sensitive evidence, secure review workflows, retention limits, and audit trails. Avoid collecting or exposing Aadhaar data unless a defined lawful requirement makes it necessary. Frontend eligibility checks are presentation only; the server must enforce women-only ride rules.
+Verification state must be authoritative on the server, with least-privilege access to sensitive evidence, secure review workflows, retention limits, and audit trails. Avoid collecting or exposing Aadhaar data unless a defined lawful requirement makes it necessary. Women-only eligibility is an Admin-granted flag stored on the approved verification submission; ride creation and passenger discovery check both this flag and the role-appropriate approved verification on the server. Frontend eligibility checks are presentation only.

@@ -47,6 +47,14 @@
     font-size: 10px;
     line-height: 1.7;
 }
+.verification-eligibility-note {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    color: #6d3049;
+    font-size: 9px;
+}
 .verification-status {
     display: flex;
     align-items: center;

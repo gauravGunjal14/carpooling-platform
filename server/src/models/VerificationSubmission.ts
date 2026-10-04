@@ -14,6 +14,7 @@ export interface VerificationSubmissionFields {
     userId: Types.ObjectId;
     documentType: VerificationDocumentType;
     status: VerificationStatus;
+    womenOnlyEligible: boolean;
     storageKey: string;
     contentType: 'application/pdf' | 'image/jpeg' | 'image/png';
     sizeBytes: number;
@@ -38,6 +39,12 @@ const verificationSubmissionSchema = new Schema<VerificationSubmissionFields>(
             enum: verificationStatuses,
             required: true,
             default: 'pending',
+        },
+        womenOnlyEligible: {
+            type: Boolean,
+            default: false,
+            required: true,
+            select: false,
         },
         storageKey: { type: String, required: true, select: false },
         contentType: {

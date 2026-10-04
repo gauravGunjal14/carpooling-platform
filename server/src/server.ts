@@ -6,11 +6,17 @@ import { connectDatabase } from './config/database.js';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
+import locationRoutes from './routes/locationRoutes.js';
+import rideRoutes from './routes/rideRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
 
 const app = express();
 app.disable('x-powered-by');
-app.use(helmet());
+app.use(
+    helmet({
+        referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    }),
+);
 app.use(
     cors({
         origin: env.CLIENT_ORIGIN,
@@ -25,6 +31,8 @@ app.use(cookieParser());
 app.get('/health', (_request, response) => response.json({ status: 'ok' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/verification', verificationRoutes);
+app.use('/api/locations', locationRoutes);
+app.use('/api/rides', rideRoutes);
 app.use((_request, response) =>
     response
         .status(404)
@@ -45,7 +53,7 @@ async function start(): Promise<void> {
     }
 
     const server = app.listen(env.PORT, () =>
-        console.info(`Authentication API listening on port ${env.PORT}`),
+        console.info(`Carpooling API listening on port ${env.PORT}`),
     );
     const shutdown = (): void => {
         server.close(() => {
