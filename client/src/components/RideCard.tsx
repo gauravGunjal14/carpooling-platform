@@ -1,14 +1,15 @@
 import { BadgeCheck, Clock3, MapPin, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import type { Ride } from '../types/rides';
+import type { Ride, RideMatchMetadata } from '../types/rides';
 
 type Props = {
     ride: Ride;
     href: string;
     actionLabel?: string;
+    match?: RideMatchMetadata;
 };
 
-export function RideCard({ ride, href, actionLabel = 'View ride' }: Props) {
+export function RideCard({ ride, href, actionLabel = 'View ride', match }: Props) {
     return (
         <article className='ride-card'>
             <div className='ride-card-topline'>
@@ -32,6 +33,14 @@ export function RideCard({ ride, href, actionLabel = 'View ride' }: Props) {
                 {ride.womenOnly && (
                     <span className='ride-women-only'>
                         <Users size={14} /> Women-only
+                    </span>
+                )}
+                {match && (
+                    <span
+                        className='ride-match-score'
+                        aria-label={`${match.matchScore}% match`}
+                    >
+                        <strong>{match.matchScore}%</strong> Match
                     </span>
                 )}
                 {ride.status !== 'scheduled' && (
@@ -73,9 +82,22 @@ export function RideCard({ ride, href, actionLabel = 'View ride' }: Props) {
                     {ride.availableSeats === 1 ? 'seat' : 'seats'} available
                 </span>
                 <span>
-                    <MapPin size={14} /> Exact-place listing
+                    <MapPin size={14} />{' '}
+                    {match
+                        ? `Pickup ${match.pickupDistanceKm.toFixed(1)} km · destination ${match.destinationDistanceKm.toFixed(1)} km`
+                        : 'Exact-place listing'}
                 </span>
             </div>
+            {match && (
+                <details className='ride-match-explanation'>
+                    <summary>Why this ride?</summary>
+                    <ul>
+                        {match.matchReasons.map((reason) => (
+                            <li key={reason}>{reason}</li>
+                        ))}
+                    </ul>
+                </details>
+            )}
             {ride.preferences.notes && (
                 <p className='ride-card-note'>{ride.preferences.notes}</p>
             )}

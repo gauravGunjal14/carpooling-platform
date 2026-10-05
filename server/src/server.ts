@@ -5,10 +5,16 @@ import helmet from 'helmet';
 import { connectDatabase } from './config/database.js';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { createServer } from 'node:http';
 import authRoutes from './routes/authRoutes.js';
+import bookingRoutes from './routes/bookingRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import ratingRoutes from './routes/ratingRoutes.js';
 import rideRoutes from './routes/rideRoutes.js';
+import trustRoutes from './routes/trustRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
+import { initializeSocket } from './services/socketService.js';
 
 const app = express();
 app.disable('x-powered-by');
@@ -33,6 +39,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/verification', verificationRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/rides', rideRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/ratings', ratingRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/trust', trustRoutes);
 app.use((_request, response) =>
     response
         .status(404)
@@ -52,8 +62,11 @@ async function start(): Promise<void> {
         return;
     }
 
-    const server = app.listen(env.PORT, () =>
-        console.info(`Carpooling API listening on port ${env.PORT}`),
+    const httpServer = createServer(app);
+    initializeSocket(httpServer);
+
+    const server = httpServer.listen(env.PORT, () =>
+        console.info(`Carpooling API & Socket.io listening on port ${env.PORT}`),
     );
     const shutdown = (): void => {
         server.close(() => {

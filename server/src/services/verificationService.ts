@@ -62,7 +62,7 @@ export async function submitVerificationDocument(
             $set: { status: 'pending', womenOnlyEligible: false, ...document },
             $unset: { reviewedBy: 1, reviewedAt: 1, reviewNote: 1 },
         },
-        { new: true, runValidators: true },
+        { returnDocument: 'after', runValidators: true },
     );
     if (!updated) {
         await removePrivateDocument(document.storageKey);
@@ -167,7 +167,7 @@ export async function reviewVerificationSubmission(
                 womenOnlyEligible: status === 'approved' && womenOnlyEligible,
             },
         },
-        { new: true, runValidators: true },
+        { returnDocument: 'after', runValidators: true },
     );
     if (!submission) {
         const exists = await VerificationSubmission.exists({ _id: id });

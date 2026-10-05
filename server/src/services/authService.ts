@@ -184,7 +184,7 @@ export async function rotateSession(
                 refreshTokenExpiresAt: new Date(Date.now() + refreshTokenLifetimeMs),
             },
         },
-        { new: true },
+        { returnDocument: 'after' },
     ).select('+refreshTokenHash +refreshTokenExpiresAt');
 
     if (!rotated) {

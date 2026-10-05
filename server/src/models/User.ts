@@ -7,6 +7,7 @@ export interface UserFields {
     passwordHash: string;
     role: Role;
     status: 'active' | 'disabled';
+    driverTier?: 'standard' | 'pro';
     refreshTokenHash?: string;
     refreshTokenExpiresAt?: Date;
     createdAt: Date;
@@ -39,6 +40,11 @@ const userSchema = new Schema<UserFields>(
             enum: ['active', 'disabled'],
             required: true,
             default: 'active',
+        },
+        driverTier: {
+            type: String,
+            enum: ['standard', 'pro'],
+            default: 'standard',
         },
         refreshTokenHash: { type: String, select: false },
         refreshTokenExpiresAt: { type: Date, select: false },

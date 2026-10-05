@@ -80,7 +80,7 @@ export const updateProfileController: RequestHandler = asyncHandler(
         const user = await User.findOneAndUpdate(
             { _id: currentUser.id, status: 'active' },
             { $set: { name: input.name } },
-            { new: true, runValidators: true },
+            { returnDocument: 'after', runValidators: true },
         );
         if (!user)
             throw new AppError(

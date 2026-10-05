@@ -13,14 +13,16 @@ export interface RideFields {
     pickup: RideLocationFields;
     destination: RideLocationFields;
     departureAt: Date;
+    totalSeats: number;
     availableSeats: number;
+    occupiedSeats: number[];
     preferences: {
         smokingAllowed: boolean;
         luggage: 'small' | 'standard' | 'large';
         notes: string;
     };
     womenOnly: boolean;
-    status: 'scheduled' | 'cancelled' | 'completed';
+    status: 'scheduled' | 'active' | 'cancelled' | 'completed';
     createdAt: Date;
     updatedAt: Date;
 }
@@ -67,7 +69,17 @@ const rideSchema = new Schema<RideFields>(
         pickup: { type: rideLocationSchema, required: true },
         destination: { type: rideLocationSchema, required: true },
         departureAt: { type: Date, required: true },
-        availableSeats: { type: Number, required: true, min: 1, max: 6 },
+        totalSeats: {
+            type: Number,
+            required: true,
+            min: 1,
+            max: 6,
+            default: function (this: RideFields) {
+                return this.availableSeats;
+            },
+        },
+        availableSeats: { type: Number, required: true, min: 0, max: 6 },
+        occupiedSeats: { type: [Number], default: [] },
         preferences: {
             smokingAllowed: { type: Boolean, default: false, required: true },
             luggage: {
@@ -81,7 +93,7 @@ const rideSchema = new Schema<RideFields>(
         womenOnly: { type: Boolean, default: false, required: true },
         status: {
             type: String,
-            enum: ['scheduled', 'cancelled', 'completed'],
+            enum: ['scheduled', 'active', 'cancelled', 'completed'],
             default: 'scheduled',
             required: true,
         },
@@ -95,6 +107,7 @@ rideSchema.index({
     'pickup.searchKey': 1,
     'destination.searchKey': 1,
 });
+rideSchema.index({ status: 1, departureAt: 1, availableSeats: 1 });
 rideSchema.index({ 'pickup.point': '2dsphere' });
 rideSchema.index({ 'destination.point': '2dsphere' });
 

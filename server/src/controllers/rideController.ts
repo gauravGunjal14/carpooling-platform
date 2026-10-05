@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Role, SafeUser } from '../types/auth.js';
 import {
     cancelMyRide,
+    completeRide,
     createRide,
     getAdminRide,
     getAdminRides,
@@ -10,6 +11,7 @@ import {
     getMyRides,
     getPassengerRide,
     searchRides,
+    startRide,
     updateMyRide,
     type RideInput,
 } from '../services/rideService.js';
@@ -54,7 +56,7 @@ const searchSchema = z
         dateStart: z.string().datetime({ offset: true }),
         dateEnd: z.string().datetime({ offset: true }),
         departureAt: z.string().datetime({ offset: true }).optional(),
-        timeWindowMinutes: z.coerce.number().int().min(15).max(360).default(60),
+        timeWindowMinutes: z.coerce.number().int().min(15).max(360).default(120),
         requiredSeats: z.coerce.number().int().min(1).max(6).default(1),
     })
     .strict()
@@ -119,6 +121,22 @@ export const cancelRideController: RequestHandler = asyncHandler(
     async (request, response) => {
         const id = parseRideId(request.params.id);
         const ride = await cancelMyRide(requireUser(request.authUser, 'Driver'), id);
+        response.json({ ride });
+    },
+);
+
+export const startRideController: RequestHandler = asyncHandler(
+    async (request, response) => {
+        const id = parseRideId(request.params.id);
+        const ride = await startRide(requireUser(request.authUser, 'Driver'), id);
+        response.json({ ride });
+    },
+);
+
+export const completeRideController: RequestHandler = asyncHandler(
+    async (request, response) => {
+        const id = parseRideId(request.params.id);
+        const ride = await completeRide(requireUser(request.authUser, 'Driver'), id);
         response.json({ ride });
     },
 );

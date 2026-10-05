@@ -18,11 +18,11 @@ Add identity and driver licence submission, protected evidence handling, review 
 
 ## Phase 4 — Ride management, locations & maps
 
-Add driver ride creation, editing, cancellation, seats, and ride history; passenger ride search and details; explicit OSM place search; and Leaflet route previews. Booking and seat reservation are not included.
+Implemented: driver ride creation, editing, cancellation, seats, and ride history; passenger ride details; explicit OSM place search; and Leaflet route previews. Passenger search now uses the Phase 5 coordinate matcher. Booking and seat reservation are not included.
 
 ## Phase 5 — Smart matching
 
-Add coordinate-radius and route compatibility, proximity-aware time/seat filters, and explainable server-side ride ranking.
+Implemented: Haversine pickup/destination distance matching within 30 km at both endpoints, optional ±120-minute departure compatibility, seat/status/date filters, Women-only eligibility enforcement, bounded candidate selection, verified-driver signal, explainable 0–100 match scores, and ranked passenger search results. Booking is not included.
 
 ## Phase 6 — Booking
 

@@ -1,7 +1,16 @@
 import { Types } from 'mongoose';
+import { Booking } from '../models/Booking.js';
 import { Ride, type RideFields, type RideLocationFields } from '../models/Ride.js';
 import { User } from '../models/User.js';
 import { VerificationSubmission } from '../models/VerificationSubmission.js';
+import { createNotification } from './notificationService.js';
+import { processCancellationRefund } from './refundService.js';
+import {
+    haversineDistanceKm,
+    matchingConfig,
+    rankRideMatches,
+    scoreRideMatch,
+} from './matchingService.js';
 import type { SafeUser } from '../types/auth.js';
 import { AppError } from '../utils/appError.js';
 
@@ -81,7 +90,7 @@ export async function updateMyRide(driver: SafeUser, id: string, input: RideInpu
             departureAt: { $gt: new Date() },
         },
         { $set: normalized },
-        { new: true, runValidators: true },
+        { returnDocument: 'after', runValidators: true },
     );
     if (!updated) {
         throw new AppError(
@@ -98,6 +107,21 @@ export async function cancelMyRide(driver: SafeUser, id: string) {
     if (!ride) throw rideNotFound();
     assertUpcoming(ride);
 
+    // Driver cancellation window enforcement: Standard = 30 hrs, Pro = 12 hrs
+    const driverUser = await User.findById(driver.id);
+    const isPro = driverUser?.driverTier === 'pro';
+    const cutoffHours = isPro ? 12 : 30;
+    const hoursBeforeDeparture =
+        (ride.departureAt.getTime() - Date.now()) / (1000 * 60 * 60);
+
+    if (hoursBeforeDeparture < cutoffHours) {
+        throw new AppError(
+            400,
+            'CANCELLATION_WINDOW_CLOSED',
+            `Drivers cannot cancel within ${cutoffHours} hours of departure (${isPro ? 'Pro' : 'Standard'} driver policy).`,
+        );
+    }
+
     const cancelled = await Ride.findOneAndUpdate(
         {
             _id: id,
@@ -106,7 +130,7 @@ export async function cancelMyRide(driver: SafeUser, id: string) {
             departureAt: { $gt: new Date() },
         },
         { $set: { status: 'cancelled' } },
-        { new: true },
+        { returnDocument: 'after' },
     );
     if (!cancelled) {
         throw new AppError(
@@ -115,6 +139,117 @@ export async function cancelMyRide(driver: SafeUser, id: string) {
             'This ride can no longer be cancelled.',
         );
     }
+
+    // Cancel all active bookings on this ride and notify passengers
+    const affectedBookings = await Booking.find({
+        rideId: ride._id,
+        status: { $in: ['pending', 'accepted'] },
+    });
+
+    for (const b of affectedBookings) {
+        b.status = 'cancelled';
+        b.cancellationReason = 'Ride cancelled by driver';
+        b.cancelledAt = new Date();
+        b.cancelledBy = new Types.ObjectId(driver.id);
+        await b.save();
+
+        await processCancellationRefund(b, {
+            reason: 'Ride cancelled by driver',
+            cancelledByRole: 'Driver',
+            hoursBeforeDeparture,
+        });
+
+        await createNotification(
+            b.passengerId,
+            'booking_cancelled',
+            'Ride Cancelled by Driver',
+            `Your scheduled trip on ${new Date(ride.departureAt).toLocaleDateString()} was cancelled by the driver. Any held seats have been released.`,
+            { rideId: ride._id.toString(), bookingId: b._id.toString() },
+        );
+    }
+
+    return getMyRide(driver, id);
+}
+
+export async function startRide(driver: SafeUser, id: string) {
+    const ride = await Ride.findOne({ _id: id, driverId: driver.id });
+    if (!ride) throw rideNotFound();
+
+    if (ride.status !== 'scheduled') {
+        throw new AppError(
+            400,
+            'INVALID_RIDE_TRANSITION',
+            `Cannot start a ride with status '${ride.status}'.`,
+        );
+    }
+
+    ride.status = 'active';
+    await ride.save();
+
+    // Notify passengers that ride is active
+    const acceptedBookings = await Booking.find({
+        rideId: ride._id,
+        status: 'accepted',
+    });
+    for (const b of acceptedBookings) {
+        await createNotification(
+            b.passengerId,
+            'ride_status_changed',
+            'Your Ride Has Started',
+            'The driver has marked your trip as active and in progress.',
+            {
+                rideId: ride._id.toString(),
+                bookingId: b._id.toString(),
+                status: 'active',
+            },
+        );
+    }
+
+    return getMyRide(driver, id);
+}
+
+export async function completeRide(driver: SafeUser, id: string) {
+    const ride = await Ride.findOne({ _id: id, driverId: driver.id });
+    if (!ride) throw rideNotFound();
+
+    if (ride.status !== 'scheduled' && ride.status !== 'active') {
+        throw new AppError(
+            400,
+            'INVALID_RIDE_TRANSITION',
+            `Cannot complete a ride with status '${ride.status}'.`,
+        );
+    }
+
+    ride.status = 'completed';
+    await ride.save();
+
+    // Mark all accepted bookings as completed
+    const acceptedBookings = await Booking.find({
+        rideId: ride._id,
+        status: 'accepted',
+    });
+    for (const b of acceptedBookings) {
+        b.status = 'completed';
+        await b.save();
+
+        await createNotification(
+            b.passengerId,
+            'ride_completed',
+            'Trip Completed!',
+            'Your ride has concluded safely. You can now leave a rating for your driver.',
+            { rideId: ride._id.toString(), bookingId: b._id.toString() },
+        );
+    }
+
+    // Also notify driver that ratings are unlocked
+    await createNotification(
+        driver.id,
+        'ride_completed',
+        'Trip Concluded',
+        'Your ride is marked complete. You can now review your passengers.',
+        { rideId: ride._id.toString() },
+    );
+
     return getMyRide(driver, id);
 }
 
@@ -122,6 +257,8 @@ export async function searchRides(passenger: SafeUser, input: RideSearchInput) {
     const dateStart = new Date(input.dateStart);
     const dateEnd = new Date(input.dateEnd);
     if (
+        !Number.isFinite(dateStart.getTime()) ||
+        !Number.isFinite(dateEnd.getTime()) ||
         dateStart >= dateEnd ||
         dateEnd.getTime() - dateStart.getTime() > 26 * 60 * 60 * 1000
     ) {
@@ -132,37 +269,78 @@ export async function searchRides(passenger: SafeUser, input: RideSearchInput) {
         );
     }
 
+    const sameLocation =
+        normalizeLocation(input.pickup.displayName) ===
+            normalizeLocation(input.destination.displayName) ||
+        haversineDistanceKm(input.pickup, input.destination) < 0.01;
+    if (sameLocation) {
+        throw new AppError(
+            400,
+            'IDENTICAL_LOCATIONS',
+            'Pickup and destination must be different locations.',
+        );
+    }
+
+    if (
+        input.departureAt !== undefined &&
+        !Number.isFinite(new Date(input.departureAt).getTime())
+    ) {
+        throw new AppError(
+            400,
+            'INVALID_DEPARTURE_TIME',
+            'Choose a valid requested departure time.',
+        );
+    }
+
     const query: Record<string, unknown> = {
         status: 'scheduled',
         departureAt: { $gte: dateStart, $lt: dateEnd, $gt: new Date() },
         availableSeats: { $gte: input.requiredSeats },
-        'pickup.searchKey': normalizeLocation(input.pickup.displayName),
-        'destination.searchKey': normalizeLocation(input.destination.displayName),
+        'pickup.point': {
+            $geoWithin: {
+                $centerSphere: [
+                    [input.pickup.longitude, input.pickup.latitude],
+                    matchingConfig.radiusKm / 6371.0088,
+                ],
+            },
+        },
     };
     if (input.departureAt) {
         const requestedTime = new Date(input.departureAt).getTime();
         const radius = input.timeWindowMinutes * 60 * 1000;
-        (query.departureAt as Record<string, Date>).$gte = new Date(
+        const departureQuery = query.departureAt as Record<string, Date>;
+        departureQuery.$gte = new Date(
             Math.max(dateStart.getTime(), requestedTime - radius),
         );
-        (query.departureAt as Record<string, Date>).$lt = new Date(
-            Math.min(dateEnd.getTime(), requestedTime + radius),
-        );
+        const windowEnd = requestedTime + radius;
+        if (windowEnd < dateEnd.getTime()) {
+            departureQuery.$lte = new Date(windowEnd);
+        }
     }
 
     const rides = (await Ride.find(query)
         .sort({ departureAt: 1 })
-        .limit(50)
+        .limit(matchingConfig.maximumCandidates)
         .lean()) as unknown as RideDocument[];
     const formatted = await formatManyRides(rides);
     const [passengerEligible, eligibleDrivers] = await Promise.all([
         isWomenOnlyEligible(passenger.id, 'Passenger'),
         getEligibleWomenOnlyDriverIds(formatted.map((ride) => ride.driver.id)),
     ]);
-    return formatted.filter(
-        (ride) =>
-            !ride.womenOnly || (passengerEligible && eligibleDrivers.has(ride.driver.id)),
-    );
+    const matches = formatted.flatMap((ride) => {
+        const match = scoreRideMatch(ride, {
+            pickup: input.pickup,
+            destination: input.destination,
+            requestedDepartureAt: input.departureAt,
+            timeWindowMinutes: input.timeWindowMinutes,
+            requiredSeats: input.requiredSeats,
+            driverIsVerified: ride.driver.isVerified,
+            passengerIsWomenOnlyEligible: passengerEligible,
+            driverIsWomenOnlyEligible: eligibleDrivers.has(ride.driver.id),
+        });
+        return match ? [{ ride, ...match }] : [];
+    });
+    return rankRideMatches(matches, (match) => match.ride.departureAt);
 }
 
 export async function getPassengerRide(passenger: SafeUser, id: string) {
@@ -319,6 +497,7 @@ function formatRide(
         pickup: formatLocation(ride.pickup),
         destination: formatLocation(ride.destination),
         departureAt: ride.departureAt,
+        totalSeats: ride.totalSeats ?? ride.availableSeats,
         availableSeats: ride.availableSeats,
         preferences: ride.preferences,
         womenOnly: ride.womenOnly,

@@ -4,7 +4,7 @@ import { LocationAutocomplete } from '../components/LocationAutocomplete';
 import { RideCard } from '../components/RideCard';
 import { RideWorkspaceHeader } from '../components/RideWorkspaceHeader';
 import { useAuth } from '../hooks/useAuth';
-import type { Ride, RideLocation } from '../types/rides';
+import type { RideLocation, RideSearchResult } from '../types/rides';
 
 function toLocalDate(date: Date): string {
     return `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, '0')}-${`${date.getDate()}`.padStart(2, '0')}`;
@@ -30,7 +30,7 @@ export function RideSearchPage() {
     const [date, setDate] = useState(tomorrowLocal);
     const [time, setTime] = useState('');
     const [seats, setSeats] = useState('1');
-    const [rides, setRides] = useState<Ride[]>([]);
+    const [rides, setRides] = useState<RideSearchResult[]>([]);
     const [searched, setSearched] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -54,7 +54,7 @@ export function RideSearchPage() {
             dateStart: range.dateStart,
             dateEnd: range.dateEnd,
             requiredSeats: seats,
-            timeWindowMinutes: '60',
+            timeWindowMinutes: '120',
         });
         if (time) {
             params.set('departureAt', new Date(`${date}T${time}`).toISOString());
@@ -63,7 +63,7 @@ export function RideSearchPage() {
         setLoading(true);
         setSearched(true);
         try {
-            const result = await request<{ rides: Ride[] }>(
+            const result = await request<{ rides: RideSearchResult[] }>(
                 `/api/rides/search?${params.toString()}`,
             );
             setRides(result.rides);
@@ -175,8 +175,9 @@ export function RideSearchPage() {
                             </label>
                         </div>
                         <p className='ride-search-scope'>
-                            Place names are matched exactly in this phase. Nearby and
-                            route-compatible suggestions arrive with smart matching.
+                            Matches are within 30 km of both places. When you choose a
+                            time, departures within ±2 hours are ranked by route, seats,
+                            and driver verification.
                         </p>
                         {error && (
                             <p
@@ -232,9 +233,10 @@ export function RideSearchPage() {
                             <div className='ride-card-list'>
                                 {rides.map((ride) => (
                                     <RideCard
-                                        key={ride.id}
-                                        ride={ride}
-                                        href={`/app/passenger/rides/${ride.id}`}
+                                        key={ride.ride.id}
+                                        ride={ride.ride}
+                                        match={ride}
+                                        href={`/app/passenger/rides/${ride.ride.id}`}
                                     />
                                 ))}
                             </div>

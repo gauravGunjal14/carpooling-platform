@@ -1,6 +1,6 @@
 # Product features
 
-This document records the planned product scope. Features below are not implemented unless identified as a landing-page demonstration.
+This document records planned and implemented product scope, with implementation status identified by phase.
 
 ## Public landing page (Phase 1)
 
@@ -10,15 +10,15 @@ Introduces the service, passenger and driver journeys, matching concept, trust a
 
 Passenger and Driver registration, login, JWT sessions, and a basic editable display-name profile are implemented in Phase 2. Admin can log in after secure CLI provisioning and is never self-selected at public signup. Role-based access is checked on the server and client routes. Email verification, password reset, and changes to email/role are not part of this phase.
 
-## Ride management and search (Phase 4)
+## Ride management and search (Phases 4–5)
 
-Drivers can create, view, edit, and cancel their own scheduled rides. Pickup and destination store a selected display name, latitude, longitude, normalized exact-place key, and GeoJSON point. Date/time, 1–6 seats, smoking preference, luggage preference, notes, and Women-only status are validated on the server. Passengers can filter upcoming available rides by exact selected place, date, approximate departure time, and seats; ride detail cards show driver display name and server-derived driving-licence verification only. Admins have read-only ride APIs. There are no bookings, seat reservations, notifications, refunds, or cancellation penalties in this phase.
+Drivers can create, view, edit, and cancel their own scheduled rides. Pickup and destination store a selected display name, latitude, longitude, normalized place key, and GeoJSON point. Date/time, 1–6 seats, smoking preference, luggage preference, notes, and Women-only status are validated on the server. Passengers can search upcoming rides using both selected coordinates, a travel date, an optional requested time, and required seats. The server filters scheduled upcoming rides with enough seats and both route endpoints within 30 km, then ranks candidates by explainable match score. Optional departure time uses a default ±120-minute window. Ride details expose the driver's display name and server-derived driving-licence verification only. Admins have read-only ride APIs. Booking and seat reservation are not included.
 
 Women-only ride creation requires an Admin-granted flag on an approved driving-licence verification. Passenger search and detail access require an Admin-granted flag on an approved identity verification. No gender attribute is stored. The server enforces these checks; UI state is only a convenience.
 
 ## Smart matching
 
-Explicit public-place search uses a rate-conscious server proxy to OpenStreetMap/Nominatim; users deliberately submit a place query instead of sending each keystroke as autocomplete. Leaflet previews show selected coordinates and a simple connection line. Phase 5 will add coordinate proximity, route compatibility, time and seat matching, ratings, trust signals, booking history, and explainable ranking. The intended radius is 30 km.
+Explicit public-place search uses a rate-conscious server proxy to OpenStreetMap/Nominatim; users deliberately submit a place query instead of sending each keystroke as autocomplete. Leaflet previews show selected coordinates and a simple connection line. Matching factors currently include endpoint proximity, optional time compatibility, spare-seat flexibility, and approved driver verification. Trust scores, ratings, and booking-history signals are not yet available and are not simulated.
 
 ## Women-only rides
 

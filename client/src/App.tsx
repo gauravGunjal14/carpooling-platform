@@ -1,6 +1,7 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { AuthProvider } from './providers/AuthProvider';
+import { SocketProvider } from './providers/SocketProvider';
 import { useAuth } from './hooks/useAuth';
 import { sessionToRolePath } from './lib/authContext';
 import type { Role } from './types/auth';
@@ -9,6 +10,7 @@ import { AuthPage } from './pages/AuthPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { AdminVerificationPage } from './pages/VerificationPage';
 import { DriverRidesPage } from './pages/DriverRidesPage';
+import { PassengerBookingsPage } from './pages/PassengerBookingsPage';
 import { RideFormPage } from './pages/RideFormPage';
 import { RideDetailsPage } from './pages/RideDetailsPage';
 import { RideSearchPage } from './pages/RideSearchPage';
@@ -104,6 +106,14 @@ function AppRoutes() {
                     }
                 />
                 <Route
+                    path='/app/passenger/bookings'
+                    element={
+                        <RequireRole roles={['Passenger']}>
+                            <PassengerBookingsPage />
+                        </RequireRole>
+                    }
+                />
+                <Route
                     path='/app/passenger/profile'
                     element={
                         <RequireRole roles={['Passenger']}>
@@ -176,7 +186,9 @@ function AppRoutes() {
 export default function App() {
     return (
         <AuthProvider>
-            <AppRoutes />
+            <SocketProvider>
+                <AppRoutes />
+            </SocketProvider>
         </AuthProvider>
     );
 }
