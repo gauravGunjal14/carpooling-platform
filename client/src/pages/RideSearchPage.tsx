@@ -1,10 +1,18 @@
-import { useMemo, useState, type FormEvent } from 'react';
-import { CalendarDays, Search, Users } from 'lucide-react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import {
+    ArrowRight,
+    BadgeCheck,
+    CalendarDays,
+    Search,
+    Sparkles,
+    Users,
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { LocationAutocomplete } from '../components/LocationAutocomplete';
 import { RideCard } from '../components/RideCard';
 import { RideWorkspaceHeader } from '../components/RideWorkspaceHeader';
 import { useAuth } from '../hooks/useAuth';
-import type { RideLocation, RideSearchResult } from '../types/rides';
+import type { RideLocation, RideSearchResult, RideSuggestion } from '../types/rides';
 
 function toLocalDate(date: Date): string {
     return `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, '0')}-${`${date.getDate()}`.padStart(2, '0')}`;
@@ -34,7 +42,22 @@ export function RideSearchPage() {
     const [searched, setSearched] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [suggestions, setSuggestions] = useState<RideSuggestion[]>([]);
     const minimumDate = useMemo(() => toLocalDate(new Date()), []);
+
+    useEffect(() => {
+        let mounted = true;
+        request<{ suggestions: RideSuggestion[] }>('/api/rides/suggestions')
+            .then((res) => {
+                if (mounted) setSuggestions(res.suggestions || []);
+            })
+            .catch(() => {
+                if (mounted) setSuggestions([]);
+            });
+        return () => {
+            mounted = false;
+        };
+    }, [request]);
 
     async function handleSearch(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -91,6 +114,157 @@ export function RideSearchPage() {
                         before choosing where to go.
                     </p>
                 </section>
+
+                {/* Rule-Based Smart Suggestions */}
+                {suggestions.length > 0 && (
+                    <section
+                        className='suggestions-section'
+                        aria-labelledby='suggestions-title'
+                    >
+                        <div className='suggestions-header'>
+                            <div>
+                                <span className='eyebrow'>RECOMMENDED FOR YOU</span>
+                                <h2
+                                    id='suggestions-title'
+                                    style={{
+                                        margin: '4px 0 0',
+                                        fontSize: '20px',
+                                        color: '#352431',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                    }}
+                                >
+                                    <Sparkles
+                                        size={20}
+                                        color='#631238'
+                                    />
+                                    Smart Ride Suggestions
+                                </h2>
+                            </div>
+                            <small style={{ color: '#695761', fontSize: '11px' }}>
+                                Based on past bookings and verified routes
+                            </small>
+                        </div>
+
+                        <div className='suggestions-grid'>
+                            {suggestions.slice(0, 3).map((item) => (
+                                <div
+                                    key={item.ride.id}
+                                    className='suggestion-card'
+                                >
+                                    <div>
+                                        <div className='suggestion-header-row'>
+                                            <span className='suggestion-reason-badge'>
+                                                <Sparkles size={11} />
+                                                {item.reason}
+                                            </span>
+                                            <span className='suggestion-score-tag'>
+                                                {item.score}% Match
+                                            </span>
+                                        </div>
+
+                                        <div
+                                            className='suggestion-route-info'
+                                            style={{ marginTop: '12px' }}
+                                        >
+                                            <strong>
+                                                {
+                                                    item.ride.pickup.displayName.split(
+                                                        ',',
+                                                    )[0]
+                                                }{' '}
+                                                →{' '}
+                                                {
+                                                    item.ride.destination.displayName.split(
+                                                        ',',
+                                                    )[0]
+                                                }
+                                            </strong>
+                                            <small>
+                                                {new Date(
+                                                    item.ride.departureAt,
+                                                ).toLocaleString(undefined, {
+                                                    weekday: 'short',
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                })}{' '}
+                                                • {item.ride.availableSeats} seat
+                                                {item.ride.availableSeats === 1
+                                                    ? ''
+                                                    : 's'}{' '}
+                                                left
+                                                {item.ride.pricePerSeat &&
+                                                    ` • ₹${item.ride.pricePerSeat}`}
+                                            </small>
+                                        </div>
+
+                                        {item.matchReasons &&
+                                            item.matchReasons.length > 0 && (
+                                                <div className='suggestion-reasons-list'>
+                                                    {item.matchReasons.map(
+                                                        (reason, idx) => (
+                                                            <span
+                                                                key={idx}
+                                                                className='suggestion-reason-chip'
+                                                            >
+                                                                ✓ {reason}
+                                                            </span>
+                                                        ),
+                                                    )}
+                                                </div>
+                                            )}
+                                    </div>
+
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            marginTop: '12px',
+                                            paddingTop: '10px',
+                                            borderTop: '1px solid #f0e6eb',
+                                        }}
+                                    >
+                                        <span
+                                            style={{
+                                                fontSize: '11px',
+                                                color: '#695761',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                            }}
+                                        >
+                                            {item.ride.driver.displayName}
+                                            {item.ride.driver.isVerified && (
+                                                <BadgeCheck
+                                                    size={13}
+                                                    color='#631238'
+                                                />
+                                            )}
+                                        </span>
+                                        <Link
+                                            to={`/app/passenger/rides/${item.ride.id}`}
+                                            className='button button-burgundy'
+                                            style={{
+                                                padding: '5px 12px',
+                                                fontSize: '10px',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                            }}
+                                        >
+                                            View ride <ArrowRight size={12} />
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
                 <section
                     className='ride-search-panel'
                     aria-labelledby='ride-search-title'

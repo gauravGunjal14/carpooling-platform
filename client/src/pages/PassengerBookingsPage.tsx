@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import {
     BadgeCheck,
     Calendar,
+    CheckCircle,
+    CreditCard,
     MapPin,
     RotateCcw,
     ShieldAlert,
@@ -13,7 +15,7 @@ import { RideWorkspaceHeader } from '../components/RideWorkspaceHeader';
 import { useAuth } from '../hooks/useAuth';
 import { useSocket } from '../providers/SocketProvider';
 import { SOCKET_EVENTS } from '../types/socketEvents';
-import type { Booking } from '../types/rides';
+import type { Booking, PaymentMethod } from '../types/rides';
 
 export function PassengerBookingsPage() {
     const { request } = useAuth();
@@ -28,6 +30,14 @@ export function PassengerBookingsPage() {
     const [reviewText, setReviewText] = useState('');
     const [submittingRating, setSubmittingRating] = useState(false);
     const [ratingSuccess, setRatingSuccess] = useState('');
+
+    // Payment modal state
+    const [payingBooking, setPayingBooking] = useState<Booking | null>(null);
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('upi');
+    const [simulateFailure, setSimulateFailure] = useState(false);
+    const [submittingPayment, setSubmittingPayment] = useState(false);
+    const [paymentSuccessMsg, setPaymentSuccessMsg] = useState('');
+    const [paymentErrorMsg, setPaymentErrorMsg] = useState('');
 
     const loadBookings = useCallback(async () => {
         setLoading(true);
@@ -65,11 +75,19 @@ export function PassengerBookingsPage() {
         const unsubRide = subscribe(SOCKET_EVENTS.RIDE_STATUS_UPDATED, () => {
             void loadBookings();
         });
+        const unsubPayment = subscribe(SOCKET_EVENTS.PAYMENT_SUCCESS, () => {
+            void loadBookings();
+        });
+        const unsubRefund = subscribe(SOCKET_EVENTS.REFUND_PROCESSED, () => {
+            void loadBookings();
+        });
         return () => {
             unsubAccepted();
             unsubRejected();
             unsubCancelled();
             unsubRide();
+            unsubPayment();
+            unsubRefund();
         };
     }, [subscribe, loadBookings]);
 
@@ -115,6 +133,47 @@ export function PassengerBookingsPage() {
             setError(cause instanceof Error ? cause.message : 'Failed to submit rating.');
         } finally {
             setSubmittingRating(false);
+        }
+    }
+
+    async function handlePayMockPayment() {
+        if (!payingBooking) return;
+        setSubmittingPayment(true);
+        setPaymentErrorMsg('');
+        setPaymentSuccessMsg('');
+        try {
+            const res = await request<{
+                success: boolean;
+                message: string;
+                payment?: { transactionReference: string; amount: number };
+            }>('/api/payments/mock', {
+                method: 'POST',
+                body: JSON.stringify({
+                    bookingId: payingBooking.id,
+                    paymentMethod,
+                    simulateFailure,
+                }),
+            });
+
+            if (res.success && res.payment) {
+                setPaymentSuccessMsg(
+                    `Payment of ₹${res.payment.amount} completed! Ref: ${res.payment.transactionReference}`,
+                );
+                await loadBookings();
+                setTimeout(() => {
+                    setPayingBooking(null);
+                    setPaymentSuccessMsg('');
+                }, 1800);
+            } else {
+                setPaymentErrorMsg(res.message || 'Payment simulation failed.');
+                await loadBookings();
+            }
+        } catch (cause) {
+            setPaymentErrorMsg(
+                cause instanceof Error ? cause.message : 'Payment failed. Please retry.',
+            );
+        } finally {
+            setSubmittingPayment(false);
         }
     }
 
@@ -257,6 +316,32 @@ export function PassengerBookingsPage() {
                                             </span>
                                         </div>
                                         <div>
+                                            <small>FARE & PAYMENT</small>
+                                            <span>
+                                                {booking.paymentStatus === 'paid' ? (
+                                                    <span className='badge-paid'>
+                                                        <CheckCircle size={10} /> Paid (₹
+                                                        {booking.totalPrice ??
+                                                            booking.seatsBooked * 250}
+                                                        )
+                                                    </span>
+                                                ) : booking.paymentStatus ===
+                                                  'refunded' ? (
+                                                    <span className='badge-refunded'>
+                                                        <RotateCcw size={10} /> Refunded
+                                                    </span>
+                                                ) : (
+                                                    <span>
+                                                        ₹
+                                                        {booking.totalPrice ??
+                                                            booking.seatsBooked *
+                                                                250}{' '}
+                                                        (Unpaid)
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div>
                                             <small>DRIVER</small>
                                             <span className='booking-driver-name'>
                                                 {booking.ride?.driver.displayName ??
@@ -277,6 +362,24 @@ export function PassengerBookingsPage() {
                                                 View ride details
                                             </Link>
                                         )}
+
+                                        {booking.status === 'accepted' &&
+                                            (!booking.paymentStatus ||
+                                                booking.paymentStatus === 'unpaid') && (
+                                                <button
+                                                    type='button'
+                                                    className='button button-burgundy'
+                                                    onClick={() => {
+                                                        setPayingBooking(booking);
+                                                        setPaymentErrorMsg('');
+                                                        setPaymentSuccessMsg('');
+                                                        setSimulateFailure(false);
+                                                    }}
+                                                >
+                                                    <CreditCard size={13} /> Pay Now
+                                                    (Demo)
+                                                </button>
+                                            )}
 
                                         {isCancellable && (
                                             <button
@@ -366,6 +469,153 @@ export function PassengerBookingsPage() {
                                     onClick={handleSubmitRating}
                                 >
                                     {submittingRating ? 'Submitting…' : 'Submit rating'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Payment Modal */}
+                {payingBooking && (
+                    <div className='rating-modal-overlay'>
+                        <div
+                            className='rating-modal-card'
+                            style={{ maxWidth: '460px' }}
+                        >
+                            <div className='rating-modal-header'>
+                                <h3>Complete Seat Payment</h3>
+                                <button
+                                    type='button'
+                                    onClick={() => setPayingBooking(null)}
+                                    aria-label='Close'
+                                    disabled={submittingPayment}
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+
+                            <div className='payment-demo-notice'>
+                                <strong>⚡ Demo Payment Gateway</strong>
+                                <br />
+                                Razorpay-ready mock architecture. No real money will be
+                                charged.
+                            </div>
+
+                            {paymentErrorMsg && (
+                                <div
+                                    className='status-banner status-banner-error'
+                                    style={{ margin: 0, padding: '8px 12px' }}
+                                >
+                                    <ShieldAlert size={14} /> {paymentErrorMsg}
+                                </div>
+                            )}
+
+                            {paymentSuccessMsg && (
+                                <div
+                                    className='status-banner'
+                                    style={{
+                                        margin: 0,
+                                        padding: '8px 12px',
+                                        background: '#f4e9ee',
+                                        borderColor: '#d9becc',
+                                        color: '#432135',
+                                    }}
+                                >
+                                    <CheckCircle size={14} /> {paymentSuccessMsg}
+                                </div>
+                            )}
+
+                            <div className='payment-summary-box'>
+                                <div>
+                                    <strong>Route:</strong>{' '}
+                                    {payingBooking.ride?.pickup.displayName} →{' '}
+                                    {payingBooking.ride?.destination.displayName}
+                                </div>
+                                <div>
+                                    <strong>Reserved Seat(s):</strong>{' '}
+                                    {payingBooking.seatNumbers.join(', ')} (
+                                    {payingBooking.seatsBooked} seats)
+                                </div>
+                                <div style={{ fontSize: '13px', color: '#631238' }}>
+                                    <strong>Total Amount:</strong> ₹
+                                    {payingBooking.totalPrice ??
+                                        payingBooking.seatsBooked * 250}
+                                </div>
+                            </div>
+
+                            <div>
+                                <small style={{ fontWeight: 600, color: '#695761' }}>
+                                    CHOOSE PAYMENT METHOD
+                                </small>
+                                <div className='payment-method-selector'>
+                                    {(
+                                        [
+                                            { id: 'upi', label: 'UPI' },
+                                            { id: 'gpay', label: 'Google Pay' },
+                                            { id: 'phonepe', label: 'PhonePe' },
+                                            { id: 'card', label: 'Debit/Credit' },
+                                            { id: 'netbanking', label: 'Net Banking' },
+                                        ] as const
+                                    ).map((method) => (
+                                        <button
+                                            key={method.id}
+                                            type='button'
+                                            className={`payment-method-btn ${paymentMethod === method.id ? 'selected' : ''}`}
+                                            onClick={() => setPaymentMethod(method.id)}
+                                            disabled={submittingPayment}
+                                        >
+                                            {method.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <label
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    fontSize: '11px',
+                                    cursor: 'pointer',
+                                    color: '#695761',
+                                }}
+                            >
+                                <input
+                                    type='checkbox'
+                                    checked={simulateFailure}
+                                    onChange={(e) => setSimulateFailure(e.target.checked)}
+                                    disabled={submittingPayment}
+                                />
+                                Simulate payment failure test (test error handling)
+                            </label>
+
+                            <div className='rating-modal-actions'>
+                                <button
+                                    type='button'
+                                    className='button button-outline'
+                                    onClick={() => setPayingBooking(null)}
+                                    disabled={submittingPayment}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type='button'
+                                    className='button button-burgundy'
+                                    disabled={
+                                        submittingPayment || Boolean(paymentSuccessMsg)
+                                    }
+                                    onClick={() => void handlePayMockPayment()}
+                                >
+                                    {submittingPayment ? (
+                                        'Processing Payment…'
+                                    ) : (
+                                        <>
+                                            <CreditCard size={13} /> Pay ₹
+                                            {payingBooking.totalPrice ??
+                                                payingBooking.seatsBooked * 250}{' '}
+                                            (Demo)
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>

@@ -8,6 +8,15 @@ export const SOCKET_EVENTS = {
     // Driver events
     BOOKING_REQUEST_RECEIVED: 'booking:request_received',
 
+    // Payment events
+    PAYMENT_SUCCESS: 'payment:success',
+    PAYMENT_FAILED: 'payment:failed',
+    REFUND_PROCESSED: 'refund:processed',
+
+    // Emergency SOS events
+    SOS_TRIGGERED: 'sos:triggered',
+    SOS_UPDATED: 'sos:updated',
+
     // Lifecycle & notification events
     RIDE_STATUS_UPDATED: 'ride:status_updated',
     NOTIFICATION_RECEIVED: 'notification:received',

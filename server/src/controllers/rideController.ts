@@ -15,6 +15,7 @@ import {
     updateMyRide,
     type RideInput,
 } from '../services/rideService.js';
+import { getSmartRideSuggestions } from '../services/suggestionService.js';
 import { AppError } from '../utils/appError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { parseBody } from '../utils/validation.js';
@@ -200,3 +201,11 @@ function requireUser(user: SafeUser | undefined, role: Role): SafeUser {
     }
     return user;
 }
+
+export const getRideSuggestionsController: RequestHandler = asyncHandler(
+    async (request, response) => {
+        const user = requireUser(request.authUser, 'Passenger');
+        const suggestions = await getSmartRideSuggestions(user);
+        response.json({ suggestions });
+    },
+);

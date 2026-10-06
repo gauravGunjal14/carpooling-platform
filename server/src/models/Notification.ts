@@ -5,8 +5,16 @@ export const notificationTypes = [
     'booking_accepted',
     'booking_rejected',
     'booking_cancelled',
+    'payment_success',
+    'payment_failed',
+    'refund_processed',
+    'ride_starting_soon',
     'ride_completed',
     'ride_status_changed',
+    'rating_reminder',
+    'verification_update',
+    'sos_alert',
+    'pro_subscription',
 ] as const;
 
 export type NotificationType = (typeof notificationTypes)[number];

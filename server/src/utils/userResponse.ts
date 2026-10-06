@@ -7,6 +7,7 @@ export function toSafeUser(user: UserDocument): SafeUser {
         name: user.name,
         email: user.email,
         role: user.role,
+        driverTier: user.driverTier,
         createdAt: user.createdAt,
     };
 }

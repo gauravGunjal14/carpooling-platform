@@ -16,6 +16,13 @@ const envSchema = z
         JWT_REFRESH_SECRET: z
             .string()
             .min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
+        SMTP_HOST: z.string().optional(),
+        SMTP_PORT: z.coerce.number().int().positive().optional().default(587),
+        SMTP_USER: z.string().optional(),
+        SMTP_PASSWORD: z.string().optional(),
+        MAIL_FROM: z.string().optional().default('no-reply@carpooling.local'),
+        RAZORPAY_KEY_ID: z.string().optional(),
+        RAZORPAY_KEY_SECRET: z.string().optional(),
     })
     .superRefine((config, context) => {
         if (config.JWT_ACCESS_SECRET === config.JWT_REFRESH_SECRET) {

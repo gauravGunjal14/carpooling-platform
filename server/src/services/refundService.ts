@@ -1,4 +1,5 @@
 import type { BookingFields } from '../models/Booking.js';
+import { processBookingRefund } from './paymentService.js';
 
 export interface RefundContext {
     reason?: string;
@@ -9,24 +10,25 @@ export interface RefundContext {
 export interface RefundResult {
     eligible: boolean;
     refundAmount: number;
-    status: 'recorded' | 'no_payment_required';
+    status: 'processed' | 'no_payment_found' | 'already_refunded' | 'recorded';
     note: string;
 }
 
 /**
- * Refund service stub/hook for future payment gateway (Razorpay) integration.
- * Records cancellation refund context cleanly without real transactions.
+ * Refund service integration.
+ * Triggers mock/gateway refund for paid bookings upon driver or passenger cancellation.
  */
 export async function processCancellationRefund(
     booking: BookingFields & { _id: unknown },
     context: RefundContext,
 ): Promise<RefundResult> {
-    // In Phase 6-8, real payment is out of scope.
-    // This hook standardizes the interface for Phase 9/Payment integration.
+    const bookingId = String(booking._id);
+    const result = await processBookingRefund(bookingId, context);
+
     return {
-        eligible: true,
-        refundAmount: 0,
-        status: 'no_payment_required',
-        note: `Cancellation recorded for booking ${String(booking._id)}. Payment gateway refund hook ready.`,
+        eligible: result.eligible,
+        refundAmount: result.refundAmount,
+        status: result.status,
+        note: result.note,
     };
 }

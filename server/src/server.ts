@@ -10,8 +10,11 @@ import authRoutes from './routes/authRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 import ratingRoutes from './routes/ratingRoutes.js';
 import rideRoutes from './routes/rideRoutes.js';
+import sosRoutes from './routes/sosRoutes.js';
+import subscriptionRoutes from './routes/subscriptionRoutes.js';
 import trustRoutes from './routes/trustRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
 import { initializeSocket } from './services/socketService.js';
@@ -40,9 +43,12 @@ app.use('/api/verification', verificationRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/rides', rideRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/trust', trustRoutes);
+app.use('/api/sos', sosRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
 app.use((_request, response) =>
     response
         .status(404)

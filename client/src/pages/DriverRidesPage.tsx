@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+    Award,
     CalendarDays,
     Check,
     CheckCircle2,
@@ -8,9 +9,11 @@ import {
     Plus,
     RefreshCw,
     Route,
+    ShieldCheck,
     Star,
     Users,
     X,
+    Zap,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { RideCard } from '../components/RideCard';
@@ -18,17 +21,21 @@ import { RideWorkspaceHeader } from '../components/RideWorkspaceHeader';
 import { useAuth } from '../hooks/useAuth';
 import { useSocket } from '../providers/SocketProvider';
 import { SOCKET_EVENTS } from '../types/socketEvents';
-import type { Booking, ConfirmedPassenger, Ride } from '../types/rides';
+import type { Booking, ConfirmedPassenger, ProSubscription, Ride } from '../types/rides';
 
 export function DriverRidesPage() {
     const { request } = useAuth();
     const [rides, setRides] = useState<Ride[]>([]);
     const [requests, setRequests] = useState<Booking[]>([]);
+    const [subscription, setSubscription] = useState<ProSubscription | null>(null);
+    const [subscribingInProgress, setSubscribingInProgress] = useState(false);
     const [selectedRidePassengers, setSelectedRidePassengers] = useState<{
         rideId: string;
         passengers: ConfirmedPassenger[];
     } | null>(null);
-    const [activeTab, setActiveTab] = useState<'rides' | 'requests'>('rides');
+    const [activeTab, setActiveTab] = useState<'rides' | 'requests' | 'subscription'>(
+        'rides',
+    );
     const [loading, setLoading] = useState(true);
     const [actionId, setActionId] = useState<string | null>(null);
     const [error, setError] = useState('');
@@ -49,14 +56,18 @@ export function DriverRidesPage() {
         setLoading(true);
         setError('');
         try {
-            const [ridesRes, requestsRes] = await Promise.all([
+            const [ridesRes, requestsRes, subRes] = await Promise.all([
                 request<{ rides: Ride[] }>('/api/rides/mine'),
                 request<{ requests: Booking[] }>('/api/bookings/driver/requests').catch(
                     () => ({ requests: [] }),
                 ),
+                request<{ subscription: ProSubscription | null }>(
+                    '/api/subscriptions/me',
+                ).catch(() => ({ subscription: null })),
             ]);
             setRides(ridesRes.rides);
             setRequests(requestsRes.requests);
+            setSubscription(subRes.subscription);
         } catch (cause) {
             setError(
                 cause instanceof Error
@@ -235,6 +246,51 @@ export function DriverRidesPage() {
         }
     }
 
+    async function handleUpgradeToPro() {
+        setSubscribingInProgress(true);
+        setError('');
+        setSuccessMessage('');
+        try {
+            const res = await request<{ subscription: ProSubscription }>(
+                '/api/subscriptions/upgrade',
+                {
+                    method: 'POST',
+                    body: JSON.stringify({ billingCycle: 'monthly' }),
+                },
+            );
+            setSubscription(res.subscription);
+            setSuccessMessage(
+                'Congratulations! You are now upgraded to Verified Pro Driver membership.',
+            );
+            await loadData();
+        } catch (cause) {
+            setError(
+                cause instanceof Error ? cause.message : 'Failed to upgrade to Pro.',
+            );
+        } finally {
+            setSubscribingInProgress(false);
+        }
+    }
+
+    async function handleCancelSubscription() {
+        if (!window.confirm('Are you sure you want to cancel your Pro membership?'))
+            return;
+        setSubscribingInProgress(true);
+        setError('');
+        setSuccessMessage('');
+        try {
+            await request('/api/subscriptions/cancel', { method: 'POST' });
+            setSuccessMessage('Pro subscription has been cancelled.');
+            await loadData();
+        } catch (cause) {
+            setError(
+                cause instanceof Error ? cause.message : 'Failed to cancel subscription.',
+            );
+        } finally {
+            setSubscribingInProgress(false);
+        }
+    }
+
     const upcomingCount = rides.filter(
         (r) => r.status === 'scheduled' || r.status === 'active',
     ).length;
@@ -302,7 +358,7 @@ export function DriverRidesPage() {
                     </div>
                 )}
 
-                {/* Dashboard Tabs: My Rides vs Booking Requests */}
+                {/* Dashboard Tabs: My Rides vs Booking Requests vs Pro Membership */}
                 <div className='driver-dashboard-tabs'>
                     <button
                         type='button'
@@ -318,6 +374,13 @@ export function DriverRidesPage() {
                     >
                         Booking Requests ({pendingRequests.length} pending)
                     </button>
+                    <button
+                        type='button'
+                        className={`driver-tab ${activeTab === 'subscription' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('subscription')}
+                    >
+                        Pro Membership {subscription?.status === 'active' ? '★' : ''}
+                    </button>
                 </div>
 
                 <div className='ride-list-heading'>
@@ -325,12 +388,16 @@ export function DriverRidesPage() {
                         <span className='eyebrow'>
                             {activeTab === 'rides'
                                 ? 'RIDE MANAGEMENT'
-                                : 'PASSENGER REQUESTS'}
+                                : activeTab === 'requests'
+                                  ? 'PASSENGER REQUESTS'
+                                  : 'MEMBERSHIP & PERKS'}
                         </span>
                         <h2>
                             {activeTab === 'rides'
                                 ? 'Created journeys'
-                                : `Booking requests (${requests.length})`}
+                                : activeTab === 'requests'
+                                  ? `Booking requests (${requests.length})`
+                                  : 'Verified Pro Driver'}
                         </h2>
                     </div>
                     <button
@@ -430,86 +497,204 @@ export function DriverRidesPage() {
                             ))}
                         </div>
                     )
-                ) : requests.length === 0 ? (
-                    <div className='ride-empty ride-empty-card'>
-                        <Users size={25} />
-                        <h3>No booking requests</h3>
-                        <p>
-                            When passengers request seats on your rides, their requests
-                            will appear here.
-                        </p>
-                    </div>
-                ) : (
-                    <div className='booking-requests-list'>
-                        {requests.map((req) => (
-                            <article
-                                key={req.id}
-                                className='booking-request-card'
-                            >
-                                <div className='booking-request-header'>
-                                    <div>
-                                        <strong>
-                                            {req.passenger?.displayName ?? 'Passenger'}
-                                        </strong>
-                                        <small>{req.passenger?.email}</small>
+                ) : activeTab === 'requests' ? (
+                    requests.length === 0 ? (
+                        <div className='ride-empty ride-empty-card'>
+                            <Users size={25} />
+                            <h3>No booking requests</h3>
+                            <p>
+                                When passengers request seats on your rides, their
+                                requests will appear here.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className='booking-requests-list'>
+                            {requests.map((req) => (
+                                <article
+                                    key={req.id}
+                                    className='booking-request-card'
+                                >
+                                    <div className='booking-request-header'>
+                                        <div>
+                                            <strong>
+                                                {req.passenger?.displayName ??
+                                                    'Passenger'}
+                                            </strong>
+                                            <small>{req.passenger?.email}</small>
+                                        </div>
+                                        <span
+                                            className={`booking-status-tag status-${req.status}`}
+                                        >
+                                            {req.status}
+                                        </span>
                                     </div>
-                                    <span
-                                        className={`booking-status-tag status-${req.status}`}
-                                    >
-                                        {req.status}
-                                    </span>
-                                </div>
-                                <div className='booking-request-body'>
-                                    <p>
-                                        Requested{' '}
-                                        <b>
-                                            {req.seatsBooked} seat
-                                            {req.seatsBooked > 1 ? 's' : ''}
-                                        </b>{' '}
-                                        (Seat {req.seatNumbers.join(', ')})
-                                    </p>
-                                    {req.ride && (
-                                        <p className='booking-request-route'>
-                                            Trip:{' '}
-                                            {req.ride.pickup.displayName.slice(0, 30)} →{' '}
-                                            {req.ride.destination.displayName.slice(
-                                                0,
-                                                30,
-                                            )}{' '}
-                                            (
-                                            {new Date(
-                                                req.ride.departureAt,
-                                            ).toLocaleDateString()}
-                                            )
+                                    <div className='booking-request-body'>
+                                        <p>
+                                            Requested{' '}
+                                            <b>
+                                                {req.seatsBooked} seat
+                                                {req.seatsBooked > 1 ? 's' : ''}
+                                            </b>{' '}
+                                            (Seat {req.seatNumbers.join(', ')})
                                         </p>
-                                    )}
-                                </div>
-                                {req.status === 'pending' && (
-                                    <div className='booking-request-actions'>
-                                        <button
-                                            type='button'
-                                            className='button button-burgundy'
-                                            disabled={actionId === req.id}
-                                            onClick={() =>
-                                                void handleAcceptBooking(req.id)
-                                            }
-                                        >
-                                            <Check size={14} /> Accept
-                                        </button>
-                                        <button
-                                            type='button'
-                                            className='button button-outline text-danger'
-                                            disabled={actionId === req.id}
-                                            onClick={() =>
-                                                void handleRejectBooking(req.id)
-                                            }
-                                        >
-                                            <X size={14} /> Decline
-                                        </button>
+                                        {req.ride && (
+                                            <p className='booking-request-route'>
+                                                Trip:{' '}
+                                                {req.ride.pickup.displayName.slice(0, 30)}{' '}
+                                                →{' '}
+                                                {req.ride.destination.displayName.slice(
+                                                    0,
+                                                    30,
+                                                )}{' '}
+                                                (
+                                                {new Date(
+                                                    req.ride.departureAt,
+                                                ).toLocaleDateString()}
+                                                )
+                                            </p>
+                                        )}
                                     </div>
-                                )}
-                            </article>
-                        ))}
+                                    {req.status === 'pending' && (
+                                        <div className='booking-request-actions'>
+                                            <button
+                                                type='button'
+                                                className='button button-burgundy'
+                                                disabled={actionId === req.id}
+                                                onClick={() =>
+                                                    void handleAcceptBooking(req.id)
+                                                }
+                                            >
+                                                <Check size={14} /> Accept
+                                            </button>
+                                            <button
+                                                type='button'
+                                                className='button button-outline text-danger'
+                                                disabled={actionId === req.id}
+                                                onClick={() =>
+                                                    void handleRejectBooking(req.id)
+                                                }
+                                            >
+                                                <X size={14} /> Decline
+                                            </button>
+                                        </div>
+                                    )}
+                                </article>
+                            ))}
+                        </div>
+                    )
+                ) : (
+                    /* activeTab === 'subscription' */
+                    <div className='pro-card-panel'>
+                        <div className='pro-hero-tier'>
+                            <div>
+                                <span className='eyebrow'>MEMBERSHIP STATUS</span>
+                                <h3
+                                    style={{
+                                        margin: '6px 0 2px',
+                                        fontSize: '20px',
+                                        color: '#352431',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                    }}
+                                >
+                                    {subscription?.status === 'active' ? (
+                                        <>
+                                            <Award
+                                                size={22}
+                                                color='#631238'
+                                            />
+                                            Verified Pro Driver (Active)
+                                        </>
+                                    ) : (
+                                        <>Standard Driver</>
+                                    )}
+                                </h3>
+                                <p
+                                    style={{
+                                        margin: 0,
+                                        fontSize: '12px',
+                                        color: '#695761',
+                                    }}
+                                >
+                                    {subscription?.status === 'active'
+                                        ? `Active monthly subscription (₹${subscription.amount}/mo). Valid until ${new Date(subscription.expiresAt).toLocaleDateString()}.`
+                                        : 'Upgrade your driver profile to maximize ride bookings, search prominence, and cancellation flexibility.'}
+                                </p>
+                            </div>
+                            {subscription?.status === 'active' ? (
+                                <span className='pro-badge'>★ PRO MEMBER</span>
+                            ) : (
+                                <button
+                                    type='button'
+                                    className='button button-burgundy'
+                                    disabled={subscribingInProgress}
+                                    onClick={handleUpgradeToPro}
+                                >
+                                    {subscribingInProgress
+                                        ? 'Activating…'
+                                        : 'Upgrade to Pro (Demo: ₹499/mo)'}
+                                </button>
+                            )}
+                        </div>
+
+                        <div className='pro-benefits-grid'>
+                            <div className='pro-benefit-card'>
+                                <Zap
+                                    size={20}
+                                    color='#631238'
+                                />
+                                <h4>Priority Search Matching</h4>
+                                <p>
+                                    Your scheduled rides appear at the top of passenger
+                                    search results with a +15 score boost.
+                                </p>
+                            </div>
+                            <div className='pro-benefit-card'>
+                                <CalendarDays
+                                    size={20}
+                                    color='#631238'
+                                />
+                                <h4>12-Hour Cancellation Window</h4>
+                                <p>
+                                    Enjoy shortened 12h cancellation flexibility without
+                                    penalties or trust score impact.
+                                </p>
+                            </div>
+                            <div className='pro-benefit-card'>
+                                <ShieldCheck
+                                    size={20}
+                                    color='#631238'
+                                />
+                                <h4>Verified Pro Trust Badge</h4>
+                                <p>
+                                    Stand out to prospective passengers with an exclusive
+                                    Pro badge on your ride listings and profile.
+                                </p>
+                            </div>
+                        </div>
+
+                        {subscription?.status === 'active' && (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'flex-end',
+                                    paddingTop: '16px',
+                                    borderTop: '1px solid #f0e6eb',
+                                }}
+                            >
+                                <button
+                                    type='button'
+                                    className='button button-outline text-danger'
+                                    disabled={subscribingInProgress}
+                                    onClick={handleCancelSubscription}
+                                >
+                                    {subscribingInProgress
+                                        ? 'Processing…'
+                                        : 'Cancel Pro Subscription'}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
 

@@ -16,6 +16,8 @@ export interface BookingFields {
     seatsBooked: number;
     seatNumbers: number[];
     status: BookingStatus;
+    totalPrice: number;
+    paymentStatus: 'unpaid' | 'paid' | 'refunded';
     cancellationReason?: string;
     cancelledAt?: Date;
     cancelledBy?: Types.ObjectId;
@@ -58,6 +60,19 @@ const bookingSchema = new Schema<BookingFields>(
             type: String,
             enum: bookingStatuses,
             default: 'pending',
+            required: true,
+            index: true,
+        },
+        totalPrice: {
+            type: Number,
+            required: true,
+            min: 0,
+            default: 0,
+        },
+        paymentStatus: {
+            type: String,
+            enum: ['unpaid', 'paid', 'refunded'],
+            default: 'unpaid',
             required: true,
             index: true,
         },

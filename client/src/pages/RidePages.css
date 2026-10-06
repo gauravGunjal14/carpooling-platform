@@ -1533,3 +1533,270 @@
     font-size: 10px;
     color: #8c7f84;
 }
+
+/* Payment Badges & Modal */
+.badge-paid {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #432135;
+    background: #f4e9ee;
+    border: 1px solid #d9becc;
+    padding: 3px 8px;
+    border-radius: 999px;
+}
+.badge-refunded {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #7b4c61;
+    background: #f8f1f4;
+    border: 1px dashed #d5b9c6;
+    padding: 3px 8px;
+    border-radius: 999px;
+}
+.payment-demo-notice {
+    background: #fdf5f8;
+    border: 1px solid #ebd3df;
+    padding: 10px 14px;
+    font-size: 11px;
+    color: #631238;
+    border-radius: 4px;
+    line-height: 1.4;
+}
+.payment-method-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 8px;
+    margin: 8px 0;
+}
+.payment-method-btn {
+    border: 1px solid #e0d0d7;
+    background: #fff;
+    padding: 10px 6px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: #352431;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+.payment-method-btn:hover {
+    border-color: #8e1b4f;
+    background: #faf2f5;
+}
+.payment-method-btn.selected {
+    border-color: #631238;
+    background: #631238;
+    color: #fff;
+}
+.payment-summary-box {
+    background: #fbf8f9;
+    border: 1px solid #eadfe3;
+    padding: 12px;
+    border-radius: 4px;
+    display: grid;
+    gap: 6px;
+    font-size: 11px;
+}
+
+/* SOS & Safety */
+.sos-active-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: #631238;
+    color: #fff;
+    padding: 16px 20px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 14px rgba(99, 18, 56, 0.25);
+}
+.sos-active-banner h3 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+.sos-active-banner p {
+    margin: 0;
+    font-size: 12px;
+    opacity: 0.92;
+    line-height: 1.4;
+}
+.sos-status-tag {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 10px;
+}
+.sos-user-msg {
+    margin-top: 6px !important;
+    font-style: italic;
+    background: rgba(0, 0, 0, 0.15);
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+.sos-trigger-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #4a0d2a;
+    color: #fdf5f8;
+    border: 1px solid #631238;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.sos-trigger-btn:hover {
+    background: #631238;
+    box-shadow: 0 2px 8px rgba(99, 18, 56, 0.3);
+}
+
+/* Smart Suggestions */
+.suggestions-section {
+    margin-bottom: 32px;
+    background: #fff;
+    border: 1px solid #eadfe3;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(53, 36, 49, 0.04);
+}
+.suggestions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+}
+.suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+}
+.suggestion-card {
+    border: 1px solid #f0e6eb;
+    border-radius: 6px;
+    padding: 16px;
+    background: #fdfbfc;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
+}
+.suggestion-card:hover {
+    border-color: #d5b9c6;
+    box-shadow: 0 4px 12px rgba(99, 18, 56, 0.08);
+}
+.suggestion-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.suggestion-reason-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #631238;
+    background: #fdf2f7;
+    border: 1px solid #ebd3df;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+.suggestion-score-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #4a0d2a;
+}
+.suggestion-route-info strong {
+    display: block;
+    font-size: 13px;
+    color: #352431;
+    margin-bottom: 2px;
+}
+.suggestion-route-info small {
+    color: #695761;
+    font-size: 11px;
+}
+.suggestion-reasons-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+.suggestion-reason-chip {
+    font-size: 9px;
+    color: #553e4b;
+    background: #f4ecf0;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+/* Pro Subscription */
+.pro-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #631238, #8e1b4f);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.pro-card-panel {
+    background: #fff;
+    border: 1px solid #eadfe3;
+    border-radius: 8px;
+    padding: 28px;
+    box-shadow: 0 2px 8px rgba(53, 36, 49, 0.04);
+}
+.pro-hero-tier {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0e6eb;
+    margin-bottom: 20px;
+}
+.pro-benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.pro-benefit-card {
+    background: #fdfbfa;
+    border: 1px solid #f0e6eb;
+    border-radius: 6px;
+    padding: 16px;
+}
+.pro-benefit-card h4 {
+    margin: 8px 0 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #352431;
+}
+.pro-benefit-card p {
+    margin: 0;
+    font-size: 11px;
+    color: #695761;
+    line-height: 1.4;
+}

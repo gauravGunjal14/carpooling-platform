@@ -203,16 +203,21 @@ export function scoreRideMatch(
 export function rankRideMatches<T extends MatchMetadata>(
     matches: T[],
     getDepartureAt: (match: T) => string | Date,
+    getIsPro?: (match: T) => boolean,
 ): T[] {
-    return [...matches].sort(
-        (left, right) =>
+    return [...matches].sort((left, right) => {
+        const leftPro = getIsPro ? (getIsPro(left) ? 1 : 0) : 0;
+        const rightPro = getIsPro ? (getIsPro(right) ? 1 : 0) : 0;
+        return (
+            rightPro - leftPro ||
             right.matchScore - left.matchScore ||
             left.pickupDistanceKm +
                 left.destinationDistanceKm -
                 (right.pickupDistanceKm + right.destinationDistanceKm) ||
             new Date(getDepartureAt(left)).getTime() -
-                new Date(getDepartureAt(right)).getTime(),
-    );
+                new Date(getDepartureAt(right)).getTime()
+        );
+    });
 }
 
 function validateCoordinates(coordinates: Coordinates): void {

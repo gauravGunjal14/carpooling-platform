@@ -11,6 +11,7 @@ import {
     createRideController,
     myRideController,
     myRidesController,
+    getRideSuggestionsController,
     passengerRideController,
     searchRidesController,
     startRideController,
@@ -31,6 +32,7 @@ router.patch('/mine/:id/complete', authorize('Driver'), completeRideController);
 router.get('/:id/passengers', authorize('Driver'), getRidePassengersController);
 router.get('/:id/seats', getRideSeatsController);
 router.get('/search', authorize('Passenger'), searchRidesController);
+router.get('/suggestions', authorize('Passenger'), getRideSuggestionsController);
 router.get('/admin', authorize('Admin'), adminRidesController);
 router.get('/admin/:id', authorize('Admin'), adminRideController);
 router.get('/:id', authorize('Passenger'), passengerRideController);

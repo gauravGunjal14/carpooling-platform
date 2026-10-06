@@ -9,6 +9,7 @@ import { createNotification } from './notificationService.js';
 import { processCancellationRefund } from './refundService.js';
 import { assertWomenOnlyEligibility } from './rideService.js';
 import { emitToUser, SOCKET_EVENTS } from './socketService.js';
+import { sendBookingAcceptedEmail, sendBookingRejectedEmail } from './emailService.js';
 import { getAnonymousSeatTrust, type AnonymousSeatTrust } from './trustService.js';
 
 export interface SeatInfo {
@@ -144,12 +145,16 @@ export async function createBooking(passenger: SafeUser, input: CreateBookingInp
     // Create the booking document
     let booking;
     try {
+        const seatPrice = ride.pricePerSeat ?? 250;
+        const totalPrice = seatNumbers.length * seatPrice;
         booking = await Booking.create({
             rideId: ride._id,
             passengerId: passenger.id,
             seatsBooked: seatNumbers.length,
             seatNumbers,
             status: 'pending',
+            totalPrice,
+            paymentStatus: 'unpaid',
         });
     } catch (err: unknown) {
         // Rollback atomic reservation on duplicate active booking or validation error
@@ -280,6 +285,8 @@ export async function getPassengerBookings(passenger: SafeUser) {
             seatsBooked: b.seatsBooked,
             seatNumbers: b.seatNumbers,
             status: b.status,
+            totalPrice: b.totalPrice ?? 0,
+            paymentStatus: b.paymentStatus ?? 'unpaid',
             cancellationReason: b.cancellationReason,
             createdAt: b.createdAt,
             ride: r
@@ -342,6 +349,8 @@ export async function getBookingDetails(user: SafeUser, bookingId: string) {
         seatsBooked: booking.seatsBooked,
         seatNumbers: booking.seatNumbers,
         status: booking.status,
+        totalPrice: booking.totalPrice ?? 0,
+        paymentStatus: booking.paymentStatus ?? 'unpaid',
         cancellationReason: booking.cancellationReason,
         cancelledAt: booking.cancelledAt,
         createdAt: booking.createdAt,
@@ -485,6 +494,8 @@ export async function getDriverBookingRequests(driver: SafeUser, rideId?: string
             seatsBooked: b.seatsBooked,
             seatNumbers: b.seatNumbers,
             status: b.status,
+            totalPrice: b.totalPrice ?? 0,
+            paymentStatus: b.paymentStatus ?? 'unpaid',
             cancellationReason: b.cancellationReason,
             createdAt: b.createdAt,
             ride: ride
@@ -550,6 +561,17 @@ export async function acceptBooking(driver: SafeUser, bookingId: string) {
         rideId: ride._id.toString(),
     });
 
+    const passengerUser = await User.findById(booking.passengerId).select('name email');
+    if (passengerUser) {
+        void sendBookingAcceptedEmail(passengerUser.email, {
+            passengerName: passengerUser.name,
+            pickup: ride.pickup.displayName,
+            destination: ride.destination.displayName,
+            departureAt: new Date(ride.departureAt).toLocaleString(),
+            bookingId: booking._id.toString(),
+        });
+    }
+
     return {
         id: booking._id.toString(),
         status: booking.status,
@@ -606,6 +628,16 @@ export async function rejectBooking(
         rideId: ride._id.toString(),
         reason: booking.cancellationReason,
     });
+
+    const passengerUser = await User.findById(booking.passengerId).select('name email');
+    if (passengerUser) {
+        void sendBookingRejectedEmail(passengerUser.email, {
+            passengerName: passengerUser.name,
+            pickup: ride.pickup.displayName,
+            destination: ride.destination.displayName,
+            reason: booking.cancellationReason,
+        });
+    }
 
     return {
         id: booking._id.toString(),

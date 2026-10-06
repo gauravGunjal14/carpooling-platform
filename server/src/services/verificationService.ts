@@ -191,6 +191,21 @@ export function documentTypeForRole(role: SafeUser['role']): VerificationDocumen
     );
 }
 
+export async function isWomenOnlyEligible(
+    userId: string,
+    role: 'Driver' | 'Passenger',
+): Promise<boolean> {
+    const documentType = documentTypeForRole(role);
+    return Boolean(
+        await VerificationSubmission.exists({
+            userId,
+            documentType,
+            status: 'approved',
+            womenOnlyEligible: true,
+        }),
+    );
+}
+
 function isDuplicateKeyError(error: unknown): boolean {
     return (
         typeof error === 'object' &&

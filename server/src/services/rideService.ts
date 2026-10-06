@@ -5,6 +5,7 @@ import { User } from '../models/User.js';
 import { VerificationSubmission } from '../models/VerificationSubmission.js';
 import { createNotification } from './notificationService.js';
 import { processCancellationRefund } from './refundService.js';
+import { sendDriverCancellationEmail } from './emailService.js';
 import {
     haversineDistanceKm,
     matchingConfig,
@@ -13,6 +14,9 @@ import {
 } from './matchingService.js';
 import type { SafeUser } from '../types/auth.js';
 import { AppError } from '../utils/appError.js';
+import { isWomenOnlyEligible } from './verificationService.js';
+
+export { isWomenOnlyEligible };
 
 export type RideLocationInput = {
     displayName: string;
@@ -44,7 +48,12 @@ export type RideSearchInput = {
 };
 
 type RideDocument = RideFields & { _id: Types.ObjectId };
-type DriverSummary = { id: string; displayName: string; isVerified: boolean };
+type DriverSummary = {
+    id: string;
+    displayName: string;
+    isVerified: boolean;
+    isPro?: boolean;
+};
 
 export async function createRide(driver: SafeUser, input: RideInput) {
     const normalized = validateRideInput(input);
@@ -166,6 +175,16 @@ export async function cancelMyRide(driver: SafeUser, id: string) {
             `Your scheduled trip on ${new Date(ride.departureAt).toLocaleDateString()} was cancelled by the driver. Any held seats have been released.`,
             { rideId: ride._id.toString(), bookingId: b._id.toString() },
         );
+
+        const passengerUser = await User.findById(b.passengerId).select('name email');
+        if (passengerUser) {
+            void sendDriverCancellationEmail(passengerUser.email, {
+                passengerName: passengerUser.name,
+                driverName: driver.name,
+                route: `${ride.pickup.displayName} → ${ride.destination.displayName}`,
+                departureAt: new Date(ride.departureAt).toLocaleString(),
+            });
+        }
     }
 
     return getMyRide(driver, id);
@@ -340,7 +359,11 @@ export async function searchRides(passenger: SafeUser, input: RideSearchInput) {
         });
         return match ? [{ ride, ...match }] : [];
     });
-    return rankRideMatches(matches, (match) => match.ride.departureAt);
+    return rankRideMatches(
+        matches,
+        (match) => match.ride.departureAt,
+        (match) => Boolean(match.ride.driver.isPro),
+    );
 }
 
 export async function getPassengerRide(passenger: SafeUser, id: string) {
@@ -392,21 +415,6 @@ export async function assertWomenOnlyEligibility(
             'An administrator must grant women-only ride eligibility after verification.',
         );
     }
-}
-
-async function isWomenOnlyEligible(
-    userId: string,
-    role: 'Driver' | 'Passenger',
-): Promise<boolean> {
-    const documentType = role === 'Driver' ? 'driver_license' : 'identity';
-    return Boolean(
-        await VerificationSubmission.exists({
-            userId,
-            documentType,
-            status: 'approved',
-            womenOnlyEligible: true,
-        }),
-    );
 }
 
 async function getEligibleWomenOnlyDriverIds(driverIds: string[]): Promise<Set<string>> {
@@ -469,36 +477,46 @@ async function formatManyRides(rides: RideDocument[]) {
     if (rides.length === 0) return [];
     const driverIds = [...new Set(rides.map((ride) => ride.driverId.toString()))];
     const [drivers, verifiedDriverIds] = await Promise.all([
-        User.find({ _id: { $in: driverIds }, status: 'active' }).select('name'),
+        User.find({ _id: { $in: driverIds }, status: 'active' }).select(
+            'name driverTier',
+        ),
         VerificationSubmission.distinct('userId', {
             userId: { $in: driverIds },
             documentType: 'driver_license',
             status: 'approved',
         }),
     ]);
-    const driverInfo = new Map(drivers.map((driver) => [driver.id, driver.name]));
+    const driverInfo = new Map(
+        drivers.map((driver) => [
+            driver.id,
+            { name: driver.name, isPro: driver.driverTier === 'pro' },
+        ]),
+    );
     const verifiedSet = new Set(verifiedDriverIds.map((id) => id.toString()));
     return rides.map((ride) => formatRide(ride, driverInfo, verifiedSet));
 }
 
 function formatRide(
     ride: RideDocument,
-    drivers: Map<string, string>,
+    drivers: Map<string, { name: string; isPro: boolean }>,
     verifiedDriverIds: Set<string>,
 ) {
     const driverId = ride.driverId.toString();
+    const driverData = drivers.get(driverId);
     return {
         id: ride._id.toString(),
         driver: {
             id: driverId,
-            displayName: drivers.get(driverId) ?? 'Driver',
+            displayName: driverData?.name ?? 'Driver',
             isVerified: verifiedDriverIds.has(driverId),
+            isPro: driverData?.isPro ?? false,
         } satisfies DriverSummary,
         pickup: formatLocation(ride.pickup),
         destination: formatLocation(ride.destination),
         departureAt: ride.departureAt,
         totalSeats: ride.totalSeats ?? ride.availableSeats,
         availableSeats: ride.availableSeats,
+        pricePerSeat: ride.pricePerSeat ?? 250,
         preferences: ride.preferences,
         womenOnly: ride.womenOnly,
         status: ride.status,

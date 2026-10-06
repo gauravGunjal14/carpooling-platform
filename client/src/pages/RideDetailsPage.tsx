@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+    AlertTriangle,
     ArrowLeft,
     BadgeCheck,
     CheckCircle2,
     Cigarette,
     Clock,
     Luggage,
+    Radio,
     ShieldAlert,
     ShieldCheck,
+    X,
     XCircle,
 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
@@ -17,7 +20,13 @@ import { SeatSelector } from '../components/SeatSelector';
 import { useAuth } from '../hooks/useAuth';
 import { useSocket } from '../providers/SocketProvider';
 import { SOCKET_EVENTS } from '../types/socketEvents';
-import type { Booking, Ride, SeatStatusInfo } from '../types/rides';
+import type {
+    Booking,
+    EmergencyType,
+    Ride,
+    SeatStatusInfo,
+    SosAlert,
+} from '../types/rides';
 
 export function RideDetailsPage() {
     const { id } = useParams();
@@ -34,9 +43,16 @@ export function RideDetailsPage() {
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
 
+    // SOS Emergency State
+    const [activeSos, setActiveSos] = useState<SosAlert | null>(null);
+    const [sosModalOpen, setSosModalOpen] = useState(false);
+    const [sosType, setSosType] = useState<EmergencyType>('unsafe_behavior');
+    const [sosMessage, setSosMessage] = useState('');
+    const [sosSubmitting, setSosSubmitting] = useState(false);
+
     const loadRideData = useCallback(async () => {
         try {
-            const [rideRes, seatsRes, bookingsRes] = await Promise.all([
+            const [rideRes, seatsRes, bookingsRes, sosRes] = await Promise.all([
                 request<{ ride: Ride }>(`/api/rides/${id}`),
                 request<{
                     totalSeats: number;
@@ -46,11 +62,15 @@ export function RideDetailsPage() {
                 request<{ bookings: Booking[] }>('/api/bookings/mine').catch(() => ({
                     bookings: [],
                 })),
+                request<{ sosAlert: SosAlert | null }>(`/api/sos/ride/${id}`).catch(
+                    () => ({ sosAlert: null }),
+                ),
             ]);
 
             setRide(rideRes.ride);
             setSeats(seatsRes.seats);
             setTotalSeats(seatsRes.totalSeats);
+            setActiveSos(sosRes.sosAlert);
 
             const activeForThisRide = bookingsRes.bookings.find(
                 (b) =>
@@ -88,11 +108,19 @@ export function RideDetailsPage() {
         const unsubRideStatus = subscribe(SOCKET_EVENTS.RIDE_STATUS_UPDATED, () => {
             void loadRideData();
         });
+        const unsubSos = subscribe(SOCKET_EVENTS.SOS_TRIGGERED, () => {
+            void loadRideData();
+        });
+        const unsubSosUpdated = subscribe(SOCKET_EVENTS.SOS_UPDATED, () => {
+            void loadRideData();
+        });
         return () => {
             unsubAccepted();
             unsubRejected();
             unsubCancelled();
             unsubRideStatus();
+            unsubSos();
+            unsubSosUpdated();
         };
     }, [subscribe, loadRideData]);
 
@@ -162,6 +190,56 @@ export function RideDetailsPage() {
     }
 
     const isDriverOfThisRide = ride && user && ride.driver.id === user.id;
+    const isConfirmedPassenger = myBooking && myBooking.status === 'accepted';
+    const isParticipant = Boolean(isDriverOfThisRide || isConfirmedPassenger);
+
+    async function handleTriggerSos() {
+        if (!ride) return;
+        setSosSubmitting(true);
+        setError('');
+        try {
+            let coords: { latitude: number; longitude: number } | undefined;
+            if (navigator.geolocation) {
+                try {
+                    const position = await new Promise<GeolocationPosition>(
+                        (resolve, reject) => {
+                            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                                timeout: 4000,
+                            });
+                        },
+                    );
+                    coords = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                    };
+                } catch {
+                    // Position optional if denied or timed out
+                }
+            }
+            const res = await request<{ sosAlert: SosAlert }>('/api/sos/trigger', {
+                method: 'POST',
+                body: JSON.stringify({
+                    rideId: ride.id,
+                    emergencyType: sosType,
+                    message: sosMessage || undefined,
+                    location: coords,
+                }),
+            });
+            setActiveSos(res.sosAlert);
+            setSosModalOpen(false);
+            setSosMessage('');
+            setSuccessMessage(
+                'Emergency SOS alert triggered! Platform safety monitors and participants have been notified.',
+            );
+            await loadRideData();
+        } catch (cause) {
+            setError(
+                cause instanceof Error ? cause.message : 'Failed to trigger SOS alert.',
+            );
+        } finally {
+            setSosSubmitting(false);
+        }
+    }
 
     return (
         <div className='ride-workspace'>
@@ -190,6 +268,36 @@ export function RideDetailsPage() {
                         <span>{successMessage}</span>
                     </div>
                 )}
+                {activeSos &&
+                    (activeSos.status === 'triggered' ||
+                        activeSos.status === 'acknowledged') && (
+                        <div
+                            className='sos-active-banner'
+                            role='alert'
+                        >
+                            <AlertTriangle size={24} />
+                            <div>
+                                <h3>
+                                    ACTIVE EMERGENCY ALERT (
+                                    {activeSos.emergencyType
+                                        .replace('_', ' ')
+                                        .toUpperCase()}
+                                    )
+                                </h3>
+                                <p>
+                                    An emergency alert was broadcast for this ride.{' '}
+                                    Status:{' '}
+                                    <span className='sos-status-tag'>
+                                        {activeSos.status}
+                                    </span>
+                                    . Emergency safety monitoring is active.
+                                </p>
+                                {activeSos.message && (
+                                    <p className='sos-user-msg'>"{activeSos.message}"</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 {loading ? (
                     <p
                         className='ride-empty'
@@ -204,9 +312,28 @@ export function RideDetailsPage() {
                                 <span className='eyebrow'>RIDE DETAILS</span>
                                 <h1>Your route, at a glance.</h1>
                             </div>
-                            {ride.womenOnly && (
-                                <span className='ride-women-only'>Women-only</span>
-                            )}
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    gap: '8px',
+                                    alignItems: 'center',
+                                }}
+                            >
+                                {isParticipant &&
+                                    ride.status !== 'cancelled' &&
+                                    ride.status !== 'completed' && (
+                                        <button
+                                            type='button'
+                                            className='sos-trigger-btn'
+                                            onClick={() => setSosModalOpen(true)}
+                                        >
+                                            <Radio size={14} /> Emergency SOS
+                                        </button>
+                                    )}
+                                {ride.womenOnly && (
+                                    <span className='ride-women-only'>Women-only</span>
+                                )}
+                            </div>
                         </div>
                         <div className='ride-detail-driver'>
                             <span
@@ -374,6 +501,161 @@ export function RideDetailsPage() {
                         </section>
                     </article>
                 ) : null}
+
+                {/* SOS Emergency Confirmation Modal */}
+                {sosModalOpen && (
+                    <div
+                        className='rating-modal-overlay'
+                        role='dialog'
+                        aria-modal='true'
+                    >
+                        <div
+                            className='rating-modal-card'
+                            style={{ maxWidth: '480px' }}
+                        >
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    borderBottom: '1px solid #ebd3df',
+                                    paddingBottom: '12px',
+                                    marginBottom: '16px',
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                    }}
+                                >
+                                    <AlertTriangle
+                                        size={20}
+                                        color='#631238'
+                                    />
+                                    <h3
+                                        style={{
+                                            margin: 0,
+                                            fontSize: '16px',
+                                            color: '#352431',
+                                        }}
+                                    >
+                                        Emergency SOS Confirmation
+                                    </h3>
+                                </div>
+                                <button
+                                    type='button'
+                                    onClick={() => setSosModalOpen(false)}
+                                    style={{
+                                        border: 'none',
+                                        background: 'none',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <div
+                                className='payment-demo-notice'
+                                style={{ marginBottom: '16px' }}
+                            >
+                                <p style={{ margin: 0 }}>
+                                    <strong>Safety Protocol:</strong> Triggering SOS
+                                    immediately alerts platform safety monitors and other
+                                    ride participants with your real-time coordinates.
+                                </p>
+                            </div>
+
+                            <div style={{ display: 'grid', gap: '14px' }}>
+                                <label className='auth-field'>
+                                    <span
+                                        style={{
+                                            fontWeight: 600,
+                                            fontSize: '12px',
+                                            color: '#352431',
+                                        }}
+                                    >
+                                        Type of Emergency
+                                    </span>
+                                    <select
+                                        className='ride-control'
+                                        value={sosType}
+                                        onChange={(e) =>
+                                            setSosType(e.target.value as EmergencyType)
+                                        }
+                                    >
+                                        <option value='unsafe_behavior'>
+                                            Unsafe Behavior / Danger
+                                        </option>
+                                        <option value='medical'>Medical Emergency</option>
+                                        <option value='accident'>
+                                            Vehicle Breakdown / Accident
+                                        </option>
+                                        <option value='route_deviation'>
+                                            Unauthorized Route Deviation
+                                        </option>
+                                        <option value='general'>General Emergency</option>
+                                    </select>
+                                </label>
+
+                                <label className='auth-field'>
+                                    <span
+                                        style={{
+                                            fontWeight: 600,
+                                            fontSize: '12px',
+                                            color: '#352431',
+                                        }}
+                                    >
+                                        Incident Details (Optional)
+                                    </span>
+                                    <textarea
+                                        className='ride-control'
+                                        rows={3}
+                                        placeholder='Describe what happened or where you are…'
+                                        value={sosMessage}
+                                        onChange={(e) => setSosMessage(e.target.value)}
+                                    />
+                                </label>
+
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        gap: '10px',
+                                        marginTop: '10px',
+                                    }}
+                                >
+                                    <button
+                                        type='button'
+                                        className='button button-outline'
+                                        style={{ flex: 1 }}
+                                        onClick={() => setSosModalOpen(false)}
+                                        disabled={sosSubmitting}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type='button'
+                                        className='button'
+                                        style={{
+                                            flex: 2,
+                                            background: '#631238',
+                                            color: '#fff',
+                                            border: 'none',
+                                        }}
+                                        onClick={handleTriggerSos}
+                                        disabled={sosSubmitting}
+                                    >
+                                        {sosSubmitting
+                                            ? 'Broadcasting Alert…'
+                                            : '🚨 Broadcast SOS Alert'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );

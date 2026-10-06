@@ -21,6 +21,7 @@ export interface RideFields {
         luggage: 'small' | 'standard' | 'large';
         notes: string;
     };
+    pricePerSeat: number;
     womenOnly: boolean;
     status: 'scheduled' | 'active' | 'cancelled' | 'completed';
     createdAt: Date;
@@ -90,6 +91,7 @@ const rideSchema = new Schema<RideFields>(
             },
             notes: { type: String, trim: true, maxlength: 240, default: '' },
         },
+        pricePerSeat: { type: Number, required: true, min: 0, default: 250 },
         womenOnly: { type: Boolean, default: false, required: true },
         status: {
             type: String,

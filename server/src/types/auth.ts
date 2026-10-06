@@ -6,7 +6,8 @@ export type SafeUser = {
     name: string;
     email: string;
     role: Role;
-    createdAt: Date;
+    driverTier?: 'standard' | 'pro';
+    createdAt?: Date;
 };
 
 declare global {
