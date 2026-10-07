@@ -80,6 +80,27 @@ export function RideCard({ ride, href, actionLabel = 'View ride', match }: Props
                 <span>
                     <Users size={14} /> {ride.availableSeats}{' '}
                     {ride.availableSeats === 1 ? 'seat' : 'seats'} available
+                    {typeof ride.confirmedPassengerCount === 'number' &&
+                        ride.confirmedPassengerCount > 0 && (
+                            <>
+                                {' '}
+                                · {ride.confirmedPassengerCount}{' '}
+                                {ride.confirmedPassengerCount === 1
+                                    ? 'passenger'
+                                    : 'passengers'}
+                            </>
+                        )}
+                    {typeof ride.pendingPassengerCount === 'number' &&
+                        ride.pendingPassengerCount > 0 && (
+                            <>
+                                {' '}
+                                · {ride.pendingPassengerCount}{' '}
+                                {ride.pendingPassengerCount === 1
+                                    ? 'request'
+                                    : 'requests'}{' '}
+                                pending
+                            </>
+                        )}
                 </span>
                 <span>
                     <MapPin size={14} />{' '}

@@ -656,18 +656,18 @@ export async function getRideConfirmedPassengers(driver: SafeUser, rideId: strin
         throw new AppError(403, 'FORBIDDEN', 'You do not own this ride.');
     }
 
-    const acceptedBookings = await Booking.find({
+    const activeBookings = await Booking.find({
         rideId: ride._id,
-        status: 'accepted',
+        status: { $in: ['accepted', 'pending'] },
     }).sort({ createdAt: 1 });
 
-    const passengerIds = acceptedBookings.map((b) => b.passengerId);
+    const passengerIds = activeBookings.map((b) => b.passengerId);
     const passengers = await User.find({ _id: { $in: passengerIds } }).select(
         'name email',
     );
     const passengerMap = new Map(passengers.map((p) => [p._id.toString(), p]));
 
-    return acceptedBookings.map((b) => {
+    return activeBookings.map((b) => {
         const p = passengerMap.get(b.passengerId.toString());
         return {
             bookingId: b._id.toString(),
@@ -676,6 +676,7 @@ export async function getRideConfirmedPassengers(driver: SafeUser, rideId: strin
             email: p?.email ?? '',
             seatNumbers: b.seatNumbers,
             seatsBooked: b.seatsBooked,
+            status: b.status,
             bookedAt: b.createdAt,
         };
     });

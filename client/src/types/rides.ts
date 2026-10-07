@@ -17,6 +17,9 @@ export type Ride = {
     departureAt: string;
     totalSeats?: number;
     availableSeats: number;
+    occupiedSeats?: number[];
+    confirmedPassengerCount?: number;
+    pendingPassengerCount?: number;
     pricePerSeat?: number;
     preferences: {
         smokingAllowed: boolean;
@@ -114,6 +117,7 @@ export type ConfirmedPassenger = {
     email: string;
     seatNumbers: number[];
     seatsBooked: number;
+    status?: BookingStatus;
     bookedAt: string;
 };
 

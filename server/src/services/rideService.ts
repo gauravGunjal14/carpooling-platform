@@ -476,7 +476,8 @@ function assertUpcoming(ride: Pick<RideFields, 'status' | 'departureAt'>): void 
 async function formatManyRides(rides: RideDocument[]) {
     if (rides.length === 0) return [];
     const driverIds = [...new Set(rides.map((ride) => ride.driverId.toString()))];
-    const [drivers, verifiedDriverIds] = await Promise.all([
+    const rideIds = rides.map((ride) => ride._id);
+    const [drivers, verifiedDriverIds, bookings] = await Promise.all([
         User.find({ _id: { $in: driverIds }, status: 'active' }).select(
             'name driverTier',
         ),
@@ -485,6 +486,10 @@ async function formatManyRides(rides: RideDocument[]) {
             documentType: 'driver_license',
             status: 'approved',
         }),
+        Booking.find({
+            rideId: { $in: rideIds },
+            status: { $in: ['accepted', 'pending'] },
+        }).select('rideId status seatsBooked'),
     ]);
     const driverInfo = new Map(
         drivers.map((driver) => [
@@ -493,13 +498,33 @@ async function formatManyRides(rides: RideDocument[]) {
         ]),
     );
     const verifiedSet = new Set(verifiedDriverIds.map((id) => id.toString()));
-    return rides.map((ride) => formatRide(ride, driverInfo, verifiedSet));
+
+    const rideCounts = new Map<string, { confirmed: number; pending: number }>();
+    for (const b of bookings) {
+        const key = b.rideId.toString();
+        const counts = rideCounts.get(key) ?? { confirmed: 0, pending: 0 };
+        if (b.status === 'accepted') {
+            counts.confirmed += 1;
+        } else if (b.status === 'pending') {
+            counts.pending += 1;
+        }
+        rideCounts.set(key, counts);
+    }
+
+    return rides.map((ride) => {
+        const counts = rideCounts.get(ride._id.toString()) ?? {
+            confirmed: 0,
+            pending: 0,
+        };
+        return formatRide(ride, driverInfo, verifiedSet, counts);
+    });
 }
 
 function formatRide(
     ride: RideDocument,
     drivers: Map<string, { name: string; isPro: boolean }>,
     verifiedDriverIds: Set<string>,
+    counts?: { confirmed: number; pending: number },
 ) {
     const driverId = ride.driverId.toString();
     const driverData = drivers.get(driverId);
@@ -516,6 +541,9 @@ function formatRide(
         departureAt: ride.departureAt,
         totalSeats: ride.totalSeats ?? ride.availableSeats,
         availableSeats: ride.availableSeats,
+        occupiedSeats: ride.occupiedSeats ?? [],
+        confirmedPassengerCount: counts?.confirmed ?? 0,
+        pendingPassengerCount: counts?.pending ?? 0,
         pricePerSeat: ride.pricePerSeat ?? 250,
         preferences: ride.preferences,
         womenOnly: ride.womenOnly,

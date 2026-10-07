@@ -59,6 +59,16 @@ export function SeatSelector({
                 type='button'
                 className={seatClass}
                 disabled={disabled}
+                onMouseEnter={() => {
+                    if (isOccupied && seatInfo) {
+                        onInspectSeat(seatInfo);
+                    }
+                }}
+                onFocus={() => {
+                    if (isOccupied && seatInfo) {
+                        onInspectSeat(seatInfo);
+                    }
+                }}
                 onClick={() => {
                     if (isOccupied) {
                         onInspectSeat(isInspected ? null : (seatInfo ?? null));
@@ -67,11 +77,16 @@ export function SeatSelector({
                         onInspectSeat(null);
                     }
                 }}
+                title={
+                    isOccupied && seatInfo?.trustSummary
+                        ? `Occupied Seat #${seatNum} | Trust Score: ${seatInfo.trustSummary.trustScore}/100 | ${seatInfo.trustSummary.isVerified ? 'Verified traveller' : 'Registered user'} | Completed: ${seatInfo.trustSummary.completedRides} rides | Rating: ${seatInfo.trustSummary.rating}★`
+                        : undefined
+                }
                 aria-label={`Seat ${seatNum}, ${
                     isMySeat
                         ? 'Booked by you'
                         : isOccupied
-                          ? 'Occupied, click to view anonymous trust'
+                          ? 'Occupied, hover or click to view anonymous trust'
                           : isSelected
                             ? 'Selected'
                             : 'Available'

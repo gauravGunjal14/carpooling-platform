@@ -80,7 +80,7 @@ export async function getOwnVerification(user: SafeUser) {
     const submission = await VerificationSubmission.findOne({
         userId: user.id,
         documentType,
-    }).select('documentType status createdAt reviewedAt +reviewNote +womenOnlyEligible');
+    }).select('documentType status createdAt reviewedAt reviewNote womenOnlyEligible');
 
     return {
         role: user.role,
@@ -100,7 +100,7 @@ export async function listVerificationSubmissions(status?: VerificationStatus) {
         .sort({ createdAt: -1 })
         .limit(100)
         .select(
-            'userId documentType status reviewedAt createdAt +reviewNote +womenOnlyEligible',
+            'userId documentType status reviewedAt createdAt reviewNote womenOnlyEligible',
         )
         .populate({ path: 'userId', select: 'name email role', model: User });
 

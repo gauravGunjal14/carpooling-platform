@@ -44,7 +44,6 @@ const verificationSubmissionSchema = new Schema<VerificationSubmissionFields>(
             type: Boolean,
             default: false,
             required: true,
-            select: false,
         },
         storageKey: { type: String, required: true, select: false },
         contentType: {

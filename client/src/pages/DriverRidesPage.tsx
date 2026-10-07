@@ -453,7 +453,20 @@ export function DriverRidesPage() {
                                                 void handleViewPassengers(ride.id)
                                             }
                                         >
-                                            <Users size={12} /> Passengers
+                                            <Users size={12} /> Passengers (
+                                            {ride.confirmedPassengerCount ?? 0})
+                                            {Boolean(ride.pendingPassengerCount) && (
+                                                <span
+                                                    style={{
+                                                        marginLeft: '4px',
+                                                        fontSize: '10px',
+                                                        color: '#8e1b4f',
+                                                        fontWeight: 600,
+                                                    }}
+                                                >
+                                                    +{ride.pendingPassengerCount} req
+                                                </span>
+                                            )}
                                         </button>
 
                                         {ride.status === 'scheduled' && (
@@ -703,7 +716,7 @@ export function DriverRidesPage() {
                     <div className='rating-modal-overlay'>
                         <div className='rating-modal-card'>
                             <div className='rating-modal-header'>
-                                <h3>Confirmed Passengers</h3>
+                                <h3>Ride Passengers & Bookings</h3>
                                 <button
                                     type='button'
                                     onClick={() => setSelectedRidePassengers(null)}
@@ -712,54 +725,227 @@ export function DriverRidesPage() {
                                     <X size={16} />
                                 </button>
                             </div>
-                            {selectedRidePassengers.passengers.length === 0 ? (
-                                <p className='text-muted'>
-                                    No passengers confirmed yet for this ride.
-                                </p>
-                            ) : (
-                                <div className='confirmed-passengers-list'>
-                                    {selectedRidePassengers.passengers.map((p) => {
-                                        const ride = rides.find(
-                                            (r) => r.id === selectedRidePassengers.rideId,
-                                        );
-                                        const isCompleted = ride?.status === 'completed';
+                            {(() => {
+                                const confirmedList =
+                                    selectedRidePassengers.passengers.filter(
+                                        (p) => (p.status ?? 'accepted') === 'accepted',
+                                    );
+                                const pendingList =
+                                    selectedRidePassengers.passengers.filter(
+                                        (p) => p.status === 'pending',
+                                    );
 
-                                        return (
-                                            <div
-                                                key={p.bookingId}
-                                                className='confirmed-passenger-item'
-                                            >
-                                                <div>
-                                                    <strong>{p.name}</strong>
-                                                    <small>{p.email}</small>
-                                                    <div className='passenger-seat-badge'>
-                                                        Seat {p.seatNumbers.join(', ')} (
-                                                        {p.seatsBooked} seat
-                                                        {p.seatsBooked > 1 ? 's' : ''})
-                                                    </div>
+                                if (
+                                    confirmedList.length === 0 &&
+                                    pendingList.length === 0
+                                ) {
+                                    return (
+                                        <p className='text-muted'>
+                                            No passengers or booking requests for this
+                                            ride yet.
+                                        </p>
+                                    );
+                                }
+
+                                return (
+                                    <div style={{ display: 'grid', gap: '16px' }}>
+                                        {pendingList.length > 0 && (
+                                            <div>
+                                                <h4
+                                                    style={{
+                                                        fontSize: '11px',
+                                                        letterSpacing: '0.5px',
+                                                        textTransform: 'uppercase',
+                                                        color: '#8e1b4f',
+                                                        marginBottom: '8px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px',
+                                                        fontWeight: 600,
+                                                    }}
+                                                >
+                                                    <Users size={13} /> Pending Booking
+                                                    Requests ({pendingList.length})
+                                                </h4>
+                                                <div className='confirmed-passengers-list'>
+                                                    {pendingList.map((p) => (
+                                                        <div
+                                                            key={p.bookingId}
+                                                            className='confirmed-passenger-item'
+                                                            style={{
+                                                                borderColor: '#e4b6c8',
+                                                                background: '#fdf7f9',
+                                                            }}
+                                                        >
+                                                            <div>
+                                                                <strong>{p.name}</strong>
+                                                                <small>{p.email}</small>
+                                                                <div
+                                                                    className='passenger-seat-badge'
+                                                                    style={{
+                                                                        background:
+                                                                            '#f5e8ee',
+                                                                        color: '#631238',
+                                                                    }}
+                                                                >
+                                                                    Requested Seat{' '}
+                                                                    {p.seatNumbers.join(
+                                                                        ', ',
+                                                                    )}{' '}
+                                                                    ({p.seatsBooked} seat
+                                                                    {p.seatsBooked > 1
+                                                                        ? 's'
+                                                                        : ''}
+                                                                    )
+                                                                </div>
+                                                            </div>
+                                                            <div
+                                                                style={{
+                                                                    display: 'flex',
+                                                                    gap: '6px',
+                                                                }}
+                                                            >
+                                                                <button
+                                                                    type='button'
+                                                                    className='button button-burgundy'
+                                                                    style={{
+                                                                        padding:
+                                                                            '6px 12px',
+                                                                        fontSize: '11px',
+                                                                    }}
+                                                                    disabled={
+                                                                        actionId ===
+                                                                        p.bookingId
+                                                                    }
+                                                                    onClick={async () => {
+                                                                        await handleAcceptBooking(
+                                                                            p.bookingId,
+                                                                        );
+                                                                        void handleViewPassengers(
+                                                                            selectedRidePassengers.rideId,
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    Accept
+                                                                </button>
+                                                                <button
+                                                                    type='button'
+                                                                    className='button button-outline text-danger'
+                                                                    style={{
+                                                                        padding:
+                                                                            '6px 10px',
+                                                                        fontSize: '11px',
+                                                                    }}
+                                                                    disabled={
+                                                                        actionId ===
+                                                                        p.bookingId
+                                                                    }
+                                                                    onClick={async () => {
+                                                                        await handleRejectBooking(
+                                                                            p.bookingId,
+                                                                        );
+                                                                        void handleViewPassengers(
+                                                                            selectedRidePassengers.rideId,
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    Decline
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                                {isCompleted && (
-                                                    <button
-                                                        type='button'
-                                                        className='button button-outline'
-                                                        onClick={() => {
-                                                            setRatingPassenger({
-                                                                rideId: selectedRidePassengers.rideId,
-                                                                bookingId: p.bookingId,
-                                                                passengerId:
-                                                                    p.passengerId,
-                                                                name: p.name,
-                                                            });
-                                                        }}
-                                                    >
-                                                        <Star size={13} /> Rate
-                                                    </button>
-                                                )}
                                             </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
+                                        )}
+
+                                        <div>
+                                            <h4
+                                                style={{
+                                                    fontSize: '11px',
+                                                    letterSpacing: '0.5px',
+                                                    textTransform: 'uppercase',
+                                                    color: '#4a3b42',
+                                                    marginBottom: '8px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    fontWeight: 600,
+                                                }}
+                                            >
+                                                <Check size={13} /> Confirmed Passengers (
+                                                {confirmedList.length})
+                                            </h4>
+                                            {confirmedList.length === 0 ? (
+                                                <p className='text-muted'>
+                                                    No confirmed passengers yet for this
+                                                    ride.
+                                                </p>
+                                            ) : (
+                                                <div className='confirmed-passengers-list'>
+                                                    {confirmedList.map((p) => {
+                                                        const ride = rides.find(
+                                                            (r) =>
+                                                                r.id ===
+                                                                selectedRidePassengers.rideId,
+                                                        );
+                                                        const isCompleted =
+                                                            ride?.status === 'completed';
+
+                                                        return (
+                                                            <div
+                                                                key={p.bookingId}
+                                                                className='confirmed-passenger-item'
+                                                            >
+                                                                <div>
+                                                                    <strong>
+                                                                        {p.name}
+                                                                    </strong>
+                                                                    <small>
+                                                                        {p.email}
+                                                                    </small>
+                                                                    <div className='passenger-seat-badge'>
+                                                                        Seat{' '}
+                                                                        {p.seatNumbers.join(
+                                                                            ', ',
+                                                                        )}{' '}
+                                                                        ({p.seatsBooked}{' '}
+                                                                        seat
+                                                                        {p.seatsBooked > 1
+                                                                            ? 's'
+                                                                            : ''}
+                                                                        )
+                                                                    </div>
+                                                                </div>
+                                                                {isCompleted && (
+                                                                    <button
+                                                                        type='button'
+                                                                        className='button button-outline'
+                                                                        onClick={() => {
+                                                                            setRatingPassenger(
+                                                                                {
+                                                                                    rideId: selectedRidePassengers.rideId,
+                                                                                    bookingId:
+                                                                                        p.bookingId,
+                                                                                    passengerId:
+                                                                                        p.passengerId,
+                                                                                    name: p.name,
+                                                                                },
+                                                                            );
+                                                                        }}
+                                                                    >
+                                                                        <Star size={13} />{' '}
+                                                                        Rate
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 )}
