@@ -158,7 +158,7 @@ carpooling-platform/
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/carpooling-platform.git
+   git clone https://github.com/gauravGunjal14/carpooling-platform.git
    cd carpooling-platform
    ```
 
