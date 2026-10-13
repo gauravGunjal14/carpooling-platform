@@ -34,14 +34,14 @@ const rideInputSchema = z
         destination: locationSchema,
         departureAt: z.string().datetime({ offset: true }),
         availableSeats: z.number().int().min(1).max(6),
+        pricePerSeat: z.coerce.number().int().min(50).max(10000).default(250),
         preferences: z
             .object({
-                smokingAllowed: z.boolean().default(false),
                 luggage: z.enum(['small', 'standard', 'large']).default('standard'),
                 notes: z.string().trim().max(240).default(''),
             })
             .strict()
-            .default({ smokingAllowed: false, luggage: 'standard', notes: '' }),
+            .default({ luggage: 'standard', notes: '' }),
         womenOnly: z.boolean().default(false),
     })
     .strict();

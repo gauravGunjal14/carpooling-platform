@@ -13,7 +13,7 @@ type FormState = {
     date: string;
     time: string;
     seats: string;
-    smokingAllowed: boolean;
+    pricePerSeat: string;
     luggage: 'small' | 'standard' | 'large';
     notes: string;
     womenOnly: boolean;
@@ -43,7 +43,7 @@ function initialForm(): FormState {
         date: localInputDate(defaultDeparture),
         time: '10:00',
         seats: '3',
-        smokingAllowed: false,
+        pricePerSeat: '250',
         luggage: 'standard',
         notes: '',
         womenOnly: false,
@@ -58,7 +58,7 @@ function formFromRide(ride: Ride): FormState {
         date: localInputDate(departure),
         time: localInputTime(departure),
         seats: String(ride.availableSeats),
-        smokingAllowed: ride.preferences.smokingAllowed,
+        pricePerSeat: String(ride.pricePerSeat ?? 250),
         luggage: ride.preferences.luggage,
         notes: ride.preferences.notes,
         womenOnly: ride.womenOnly,
@@ -132,6 +132,11 @@ export function RideFormPage() {
             setError('Choose a departure date and time in the future.');
             return;
         }
+        const priceNum = Number(form.pricePerSeat);
+        if (!Number.isFinite(priceNum) || priceNum < 50 || priceNum > 10000) {
+            setError('Price per seat must be between ₹50 and ₹10,000.');
+            return;
+        }
         if (form.womenOnly && !verification?.womenOnlyEligible) {
             setError(
                 'Women-only rides require administrator-granted eligibility after verification.',
@@ -146,8 +151,8 @@ export function RideFormPage() {
                 destination: form.destination,
                 departureAt: departureAt.toISOString(),
                 availableSeats: Number(form.seats),
+                pricePerSeat: Number(form.pricePerSeat),
                 preferences: {
-                    smokingAllowed: form.smokingAllowed,
                     luggage: form.luggage,
                     notes: form.notes.trim(),
                 },
@@ -327,15 +332,27 @@ export function RideFormPage() {
                                         </select>
                                     </label>
                                 </div>
-                                <label className='ride-check-row'>
+                                <label
+                                    className='auth-field'
+                                    htmlFor='ride-price'
+                                >
+                                    <span>
+                                        Price per seat <small>(₹50 – ₹10,000)</small>
+                                    </span>
                                     <input
-                                        type='checkbox'
-                                        checked={form.smokingAllowed}
+                                        id='ride-price'
+                                        className='ride-control'
+                                        type='number'
+                                        min={50}
+                                        max={10000}
+                                        step={10}
+                                        value={form.pricePerSeat}
                                         onChange={(event) =>
-                                            update('smokingAllowed', event.target.checked)
+                                            update('pricePerSeat', event.target.value)
                                         }
+                                        required
+                                        placeholder='e.g. 250'
                                     />
-                                    <span>Smoking is allowed during this ride</span>
                                 </label>
                                 <label
                                     className='auth-field'
@@ -358,30 +375,67 @@ export function RideFormPage() {
                                         {form.notes.length}/240 characters
                                     </small>
                                 </label>
-                                <div
-                                    className={`ride-women-toggle${verification?.womenOnlyEligible ? '' : ' ride-women-toggle-disabled'}`}
-                                >
-                                    <label className='ride-check-row'>
-                                        <input
-                                            type='checkbox'
-                                            checked={form.womenOnly}
-                                            disabled={
-                                                !verification?.womenOnlyEligible &&
-                                                !form.womenOnly
-                                            }
-                                            onChange={(event) =>
-                                                update('womenOnly', event.target.checked)
-                                            }
-                                        />
-                                        <span>
-                                            <strong>Women-only ride</strong>
-                                            <small>
-                                                For eligible, verified passengers;
-                                                visibility is enforced by the server.
-                                            </small>
-                                        </span>
-                                    </label>
-                                    <div className='ride-women-status'>
+                                <div className='auth-field'>
+                                    <span>Ride Type</span>
+                                    <div
+                                        style={{
+                                            display: 'grid',
+                                            gap: '10px',
+                                            marginTop: '6px',
+                                        }}
+                                    >
+                                        <label
+                                            className='ride-check-row'
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            <input
+                                                type='radio'
+                                                name='rideType'
+                                                checked={!form.womenOnly}
+                                                onChange={() =>
+                                                    update('womenOnly', false)
+                                                }
+                                            />
+                                            <span>
+                                                <strong>Normal Ride</strong>
+                                                <small>
+                                                    Open to all verified passengers.
+                                                </small>
+                                            </span>
+                                        </label>
+                                        <label
+                                            className={`ride-check-row${verification?.womenOnlyEligible ? '' : ' ride-women-toggle-disabled'}`}
+                                            style={{
+                                                cursor: verification?.womenOnlyEligible
+                                                    ? 'pointer'
+                                                    : 'not-allowed',
+                                                opacity: verification?.womenOnlyEligible
+                                                    ? 1
+                                                    : 0.6,
+                                            }}
+                                        >
+                                            <input
+                                                type='radio'
+                                                name='rideType'
+                                                checked={form.womenOnly}
+                                                disabled={
+                                                    !verification?.womenOnlyEligible
+                                                }
+                                                onChange={() => update('womenOnly', true)}
+                                            />
+                                            <span>
+                                                <strong>Women Only Ride</strong>
+                                                <small>
+                                                    For eligible, verified passengers;
+                                                    visibility is enforced by the server.
+                                                </small>
+                                            </span>
+                                        </label>
+                                    </div>
+                                    <div
+                                        className='ride-women-status'
+                                        style={{ marginTop: '8px' }}
+                                    >
                                         <ShieldCheck size={15} />
                                         {verification?.womenOnlyEligible
                                             ? 'Eligibility confirmed by an administrator'

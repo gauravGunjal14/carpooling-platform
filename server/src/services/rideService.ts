@@ -29,8 +29,8 @@ export type RideInput = {
     destination: RideLocationInput;
     departureAt: string;
     availableSeats: number;
+    pricePerSeat: number;
     preferences: {
-        smokingAllowed: boolean;
         luggage: 'small' | 'standard' | 'large';
         notes: string;
     };
@@ -60,9 +60,12 @@ export async function createRide(driver: SafeUser, input: RideInput) {
     if (normalized.womenOnly) {
         await assertWomenOnlyEligibility(driver.id, 'Driver');
     }
+    const totalSeats = normalized.availableSeats;
     const ride = await Ride.create({
         driverId: driver.id,
         ...normalized,
+        totalSeats,
+        occupiedSeats: [],
         status: 'scheduled',
     });
     return (await formatManyRides([ride.toObject() as RideDocument]))[0];
@@ -447,7 +450,16 @@ function validateRideInput(input: RideInput) {
             'Pickup and destination must be different locations.',
         );
     }
-    return { ...input, pickup, destination, departureAt };
+    const pricePerSeat = Number(input.pricePerSeat ?? 250);
+    if (!Number.isFinite(pricePerSeat) || pricePerSeat < 50 || pricePerSeat > 10000) {
+        throw new AppError(
+            400,
+            'INVALID_PRICE',
+            'Price per seat must be between ₹50 and ₹10,000.',
+        );
+    }
+
+    return { ...input, pickup, destination, departureAt, pricePerSeat };
 }
 
 function toStoredLocation(location: RideLocationInput): RideLocationFields {

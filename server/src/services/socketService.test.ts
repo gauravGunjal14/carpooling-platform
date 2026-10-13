@@ -14,10 +14,6 @@ test.before(async () => {
     await connectDatabase();
 });
 
-test.after(async () => {
-    await mongoose.disconnect();
-});
-
 test('Socket.io authentication, isolation, and targeted delivery', async () => {
     // 1. Setup server
     const httpServer = createServer();
@@ -133,4 +129,5 @@ test('Socket.io authentication, isolation, and targeted delivery', async () => {
     io.close();
     await new Promise<void>((resolve) => httpServer.close(() => resolve()));
     await User.deleteMany({ _id: { $in: [user1._id, user2._id] } });
+    await mongoose.disconnect();
 });

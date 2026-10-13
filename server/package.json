@@ -5,7 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "tsx watch src/server.ts",
-        "test": "node --import tsx --test \"src/**/*.test.ts\"",
+        "test": "node --import tsx --test --test-concurrency=1 \"src/**/*.test.ts\"",
         "build": "tsc",
         "typecheck": "tsc --noEmit",
         "create-admin": "tsx src/scripts/createAdmin.ts"

@@ -18,7 +18,7 @@ interface InAppNotification {
 }
 
 export function RideWorkspaceHeader({ role }: Props) {
-    const { signOut, request } = useAuth();
+    const { user, signOut, request } = useAuth();
     const { subscribe } = useSocket();
     const navigate = useNavigate();
     const isDriver = role === 'Driver';
@@ -29,6 +29,7 @@ export function RideWorkspaceHeader({ role }: Props) {
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const loadNotifications = useCallback(async () => {
+        if (!user) return;
         try {
             const res = await request<{
                 notifications: InAppNotification[];
@@ -39,7 +40,7 @@ export function RideWorkspaceHeader({ role }: Props) {
         } catch {
             // Silently handle if notifications are unavailable
         }
-    }, [request]);
+    }, [request, user]);
 
     useEffect(() => {
         void loadNotifications();

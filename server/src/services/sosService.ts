@@ -193,11 +193,7 @@ export async function getRideActiveSos(user: SafeUser, rideId: string) {
     const isAdmin = user.role === 'Admin';
 
     if (!isDriver && !isPassenger && !isAdmin) {
-        throw new AppError(
-            403,
-            'FORBIDDEN',
-            'Access to this ride emergency state denied.',
-        );
+        return null;
     }
 
     const activeAlert = await SosAlert.findOne({

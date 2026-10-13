@@ -1,4 +1,4 @@
-import { BadgeCheck, Clock3, MapPin, Users } from 'lucide-react';
+import { BadgeCheck, Clock3, MapPin, Tag, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Ride, RideMatchMetadata } from '../types/rides';
 
@@ -101,6 +101,9 @@ export function RideCard({ ride, href, actionLabel = 'View ride', match }: Props
                                 pending
                             </>
                         )}
+                </span>
+                <span>
+                    <Tag size={14} /> ₹{ride.pricePerSeat ?? 250}/seat
                 </span>
                 <span>
                     <MapPin size={14} />{' '}

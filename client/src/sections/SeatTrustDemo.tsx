@@ -28,12 +28,6 @@ export function SeatTrustDemo() {
                             <div className='car-outline'>
                                 <div className='car-front'>
                                     <span>FRONT</span>
-                                    <div
-                                        className='seat steering'
-                                        aria-hidden='true'
-                                    >
-                                        ◖
-                                    </div>
                                     <button
                                         className={`seat ${selected === 1 ? 'chosen' : ''}`}
                                         onClick={() =>
@@ -43,6 +37,13 @@ export function SeatTrustDemo() {
                                     >
                                         1
                                     </button>
+                                    <div
+                                        className='seat steering'
+                                        aria-label='Driver (Right-hand drive)'
+                                        title='Driver (Right-hand drive / Indian cars)'
+                                    >
+                                        ◖
+                                    </div>
                                 </div>
                                 <div className='car-back'>
                                     <button

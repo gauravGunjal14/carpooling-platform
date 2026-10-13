@@ -113,13 +113,14 @@ export function SeatSelector({
                         <div className='car-outline'>
                             <div className='car-front'>
                                 <span>FRONT</span>
+                                {renderSeatButton(1, frontSeat)}
                                 <div
                                     className='seat steering'
-                                    aria-hidden='true'
+                                    aria-label='Driver (Right-hand drive)'
+                                    title='Driver (Right-hand drive / Indian cars)'
                                 >
                                     ◖
                                 </div>
-                                {renderSeatButton(1, frontSeat)}
                             </div>
                             <div className='car-back'>
                                 {backSeats.map((s, idx) => renderSeatButton(idx + 2, s))}
@@ -134,6 +135,9 @@ export function SeatSelector({
                             </span>
                             <span>
                                 <i className='legend-selected' /> Selected
+                            </span>
+                            <span>
+                                <i className='legend-driver'>◖</i> Driver (RHD)
                             </span>
                         </div>
                     </div>

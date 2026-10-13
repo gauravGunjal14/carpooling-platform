@@ -1706,6 +1706,17 @@ button {
     border-color: #92707d !important;
 }
 
+.legend-driver {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none !important;
+    color: #aba0a4;
+    font-size: 11px;
+    height: auto !important;
+    width: auto !important;
+}
+
 .seat-hint {
     display: flex;
     gap: 7px;

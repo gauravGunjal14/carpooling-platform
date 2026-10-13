@@ -82,6 +82,11 @@ export async function getOwnVerification(user: SafeUser) {
         documentType,
     }).select('documentType status createdAt reviewedAt reviewNote womenOnlyEligible');
 
+    const userDoc = await User.findById(user.id).select('womenOnlyEligible');
+    const isEligible =
+        submission?.status === 'approved' &&
+        Boolean(userDoc?.womenOnlyEligible || submission.womenOnlyEligible === true);
+
     return {
         role: user.role,
         documentType,
@@ -90,8 +95,7 @@ export async function getOwnVerification(user: SafeUser) {
         submittedAt: submission?.createdAt ?? null,
         reviewedAt: submission?.reviewedAt ?? null,
         reviewNote: submission?.reviewNote ?? null,
-        womenOnlyEligible:
-            submission?.status === 'approved' && submission.womenOnlyEligible === true,
+        womenOnlyEligible: isEligible,
     };
 }
 
@@ -179,6 +183,11 @@ export async function reviewVerificationSubmission(
                 : 'Verification submission not found.',
         );
     }
+
+    const isApprovedAndEligible = status === 'approved' && womenOnlyEligible;
+    await User.findByIdAndUpdate(submission.userId, {
+        $set: { womenOnlyEligible: isApprovedAndEligible },
+    });
 }
 
 export function documentTypeForRole(role: SafeUser['role']): VerificationDocumentType {
@@ -196,6 +205,19 @@ export async function isWomenOnlyEligible(
     role: 'Driver' | 'Passenger',
 ): Promise<boolean> {
     const documentType = documentTypeForRole(role);
+    const [subApproved, userEligible] = await Promise.all([
+        VerificationSubmission.exists({
+            userId,
+            documentType,
+            status: 'approved',
+        }),
+        User.exists({
+            _id: userId,
+            womenOnlyEligible: true,
+        }),
+    ]);
+    if (!subApproved) return false;
+    if (userEligible) return true;
     return Boolean(
         await VerificationSubmission.exists({
             userId,

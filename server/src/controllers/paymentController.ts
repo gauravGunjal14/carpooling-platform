@@ -2,9 +2,12 @@ import type { RequestHandler } from 'express';
 import { z } from 'zod';
 import { paymentMethods } from '../models/Payment.js';
 import {
+    createBookingPaymentOrder,
     getPaymentForBooking,
     getMyPayments,
     processMockPayment,
+    recordFailedPayment,
+    verifyAndConfirmBookingPayment,
 } from '../services/paymentService.js';
 import type { SafeUser } from '../types/auth.js';
 import { AppError } from '../utils/appError.js';
@@ -16,6 +19,29 @@ const mockPaymentSchema = z
         bookingId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid booking ID'),
         paymentMethod: z.enum(paymentMethods),
         simulateFailure: z.boolean().optional(),
+    })
+    .strict();
+
+const createOrderSchema = z
+    .object({
+        bookingId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid booking ID'),
+    })
+    .strict();
+
+const verifyPaymentSchema = z
+    .object({
+        bookingId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid booking ID'),
+        razorpayOrderId: z.string().min(1, 'Order ID is required'),
+        razorpayPaymentId: z.string().min(1, 'Payment ID is required'),
+        razorpaySignature: z.string().optional(),
+        paymentMethod: z.enum(paymentMethods).optional(),
+    })
+    .strict();
+
+const paymentFailedSchema = z
+    .object({
+        bookingId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid booking ID'),
+        reason: z.string().optional(),
     })
     .strict();
 
@@ -65,5 +91,52 @@ export const paymentWebhookController: RequestHandler = asyncHandler(
         // Razorpay / gateway webhook receiver stub
         // Logs signature and payload for future real gateway hook
         response.json({ status: 'received', message: 'Webhook endpoint active' });
+    },
+);
+
+export const createPaymentOrderController: RequestHandler = asyncHandler(
+    async (request, response) => {
+        const user = requireAuth(request.authUser);
+        if (user.role !== 'Passenger') {
+            throw new AppError(
+                403,
+                'FORBIDDEN',
+                'Only passengers can initiate payments.',
+            );
+        }
+
+        const input = parseBody(createOrderSchema, request.body);
+        const result = await createBookingPaymentOrder(user, input);
+        response.status(200).json(result);
+    },
+);
+
+export const verifyPaymentController: RequestHandler = asyncHandler(
+    async (request, response) => {
+        const user = requireAuth(request.authUser);
+        if (user.role !== 'Passenger') {
+            throw new AppError(403, 'FORBIDDEN', 'Only passengers can verify payments.');
+        }
+
+        const input = parseBody(verifyPaymentSchema, request.body);
+        const result = await verifyAndConfirmBookingPayment(user, input);
+        response.status(200).json(result);
+    },
+);
+
+export const paymentFailedController: RequestHandler = asyncHandler(
+    async (request, response) => {
+        const user = requireAuth(request.authUser);
+        if (user.role !== 'Passenger') {
+            throw new AppError(
+                403,
+                'FORBIDDEN',
+                'Only passengers can record payment outcomes.',
+            );
+        }
+
+        const input = parseBody(paymentFailedSchema, request.body);
+        const result = await recordFailedPayment(user, input.bookingId, input.reason);
+        response.status(200).json(result ?? { success: true });
     },
 );

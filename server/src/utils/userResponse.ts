@@ -8,6 +8,7 @@ export function toSafeUser(user: UserDocument): SafeUser {
         email: user.email,
         role: user.role,
         driverTier: user.driverTier,
+        womenOnlyEligible: Boolean(user.womenOnlyEligible),
         createdAt: user.createdAt,
     };
 }

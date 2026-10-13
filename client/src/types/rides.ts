@@ -20,9 +20,8 @@ export type Ride = {
     occupiedSeats?: number[];
     confirmedPassengerCount?: number;
     pendingPassengerCount?: number;
-    pricePerSeat?: number;
+    pricePerSeat: number;
     preferences: {
-        smokingAllowed: boolean;
         luggage: 'small' | 'standard' | 'large';
         notes: string;
     };

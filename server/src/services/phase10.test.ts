@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { connectDatabase } from '../config/database.js';
 import { Booking } from '../models/Booking.js';
 import { Ride } from '../models/Ride.js';
@@ -96,19 +96,20 @@ test('Phase 10: SOS Emergency System & Pro Subscriptions', async (t) => {
             searchKey: 'andheri station',
             latitude: 19.1197,
             longitude: 72.8464,
+            point: { type: 'Point', coordinates: [72.8464, 19.1197] },
         },
         destination: {
             displayName: 'Bandra Kurla Complex',
             searchKey: 'bandra kurla complex',
             latitude: 19.0657,
             longitude: 72.8687,
+            point: { type: 'Point', coordinates: [72.8687, 19.0657] },
         },
         departureAt: new Date(Date.now() + 2 * 3600 * 1000),
         totalSeats: 4,
         availableSeats: 3,
         pricePerSeat: 250,
         preferences: {
-            smokingAllowed: false,
             luggage: 'standard',
             notes: 'Test trip',
         },
@@ -249,4 +250,5 @@ test('Phase 10: SOS Emergency System & Pro Subscriptions', async (t) => {
             ],
         },
     });
+    await mongoose.disconnect();
 });

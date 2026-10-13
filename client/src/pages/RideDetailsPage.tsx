@@ -4,12 +4,13 @@ import {
     ArrowLeft,
     BadgeCheck,
     CheckCircle2,
-    Cigarette,
     Clock,
+    CreditCard,
     Luggage,
     Radio,
     ShieldAlert,
     ShieldCheck,
+    Tag,
     X,
     XCircle,
 } from 'lucide-react';
@@ -28,6 +29,21 @@ import type {
     SosAlert,
 } from '../types/rides';
 
+function loadRazorpayScript(): Promise<boolean> {
+    return new Promise((resolve) => {
+        if ((window as unknown as { Razorpay?: unknown }).Razorpay) {
+            resolve(true);
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+    });
+}
+
 export function RideDetailsPage() {
     const { id } = useParams();
     const { request, user } = useAuth();
@@ -42,6 +58,17 @@ export function RideDetailsPage() {
     const [cancellingInProgress, setCancellingInProgress] = useState(false);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [paymentModal, setPaymentModal] = useState<{
+        bookingId: string;
+        orderId: string;
+        amount: number;
+        currency: string;
+        keyId: string;
+        seatNumbers: number[];
+        isSuccess?: boolean;
+        confirmedBooking?: Booking;
+    } | null>(null);
+    const [verifyingPayment, setVerifyingPayment] = useState(false);
 
     // SOS Emergency State
     const [activeSos, setActiveSos] = useState<SosAlert | null>(null);
@@ -59,12 +86,18 @@ export function RideDetailsPage() {
                     availableSeatsCount: number;
                     seats: SeatStatusInfo[];
                 }>(`/api/rides/${id}/seats`),
-                request<{ bookings: Booking[] }>('/api/bookings/mine').catch(() => ({
-                    bookings: [],
-                })),
-                request<{ sosAlert: SosAlert | null }>(`/api/sos/ride/${id}`).catch(
-                    () => ({ sosAlert: null }),
-                ),
+                user
+                    ? request<{ bookings: Booking[] }>('/api/bookings/mine').catch(
+                          () => ({
+                              bookings: [],
+                          }),
+                      )
+                    : Promise.resolve({ bookings: [] }),
+                user
+                    ? request<{ sosAlert: SosAlert | null }>(`/api/sos/ride/${id}`).catch(
+                          () => ({ sosAlert: null }),
+                      )
+                    : Promise.resolve({ sosAlert: null }),
             ]);
 
             setRide(rideRes.ride);
@@ -87,7 +120,7 @@ export function RideDetailsPage() {
         } finally {
             setLoading(false);
         }
-    }, [id, request]);
+    }, [id, request, user]);
 
     useEffect(() => {
         void loadRideData();
@@ -136,11 +169,12 @@ export function RideDetailsPage() {
     }
 
     async function handleRequestBooking() {
-        if (selectedSeats.length === 0) return;
+        if (selectedSeats.length === 0 || !ride) return;
         setBookingInProgress(true);
         setError('');
         setSuccessMessage('');
         try {
+            // Step 1: Create pending booking
             const res = await request<{ booking: Booking }>('/api/bookings', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -148,18 +182,160 @@ export function RideDetailsPage() {
                     seatNumbers: selectedSeats,
                 }),
             });
+
+            // Step 2: Request Razorpay payment order
+            const orderRes = await request<{
+                orderId: string;
+                amount: number;
+                currency: string;
+                keyId: string;
+                bookingId: string;
+                seatsBooked: number;
+                seatNumbers: number[];
+            }>('/api/payments/order', {
+                method: 'POST',
+                body: JSON.stringify({
+                    bookingId: res.booking.id,
+                }),
+            });
+
+            // Check if Razorpay SDK is available
+            const hasRazorpay = await loadRazorpayScript();
+            if (
+                hasRazorpay &&
+                typeof (window as unknown as { Razorpay: unknown }).Razorpay ===
+                    'function' &&
+                orderRes.keyId &&
+                !orderRes.keyId.startsWith('rzp_test_mock')
+            ) {
+                const RazorpayConstructor = (
+                    window as unknown as {
+                        Razorpay: new (options: Record<string, unknown>) => {
+                            open: () => void;
+                        };
+                    }
+                ).Razorpay;
+
+                const rzp = new RazorpayConstructor({
+                    key: orderRes.keyId,
+                    amount: Math.round(orderRes.amount * 100),
+                    currency: orderRes.currency,
+                    name: 'Wayfare Carpooling',
+                    description: `Payment for Seat ${selectedSeats.join(', ')} (${selectedSeats.length} seat${selectedSeats.length > 1 ? 's' : ''})`,
+                    order_id: orderRes.orderId,
+                    handler: async (response: {
+                        razorpay_order_id: string;
+                        razorpay_payment_id: string;
+                        razorpay_signature: string;
+                    }) => {
+                        await handleVerifyPayment(
+                            res.booking.id,
+                            response.razorpay_order_id,
+                            response.razorpay_payment_id,
+                            response.razorpay_signature,
+                        );
+                    },
+                    modal: {
+                        ondismiss: async () => {
+                            await handleCancelPayment(res.booking.id, 'Checkout closed');
+                        },
+                    },
+                    prefill: {
+                        name: user?.name,
+                        email: user?.email,
+                    },
+                    theme: {
+                        color: '#742b49',
+                    },
+                });
+                rzp.open();
+            } else {
+                // Open test mode checkout modal in-app
+                setPaymentModal({
+                    bookingId: res.booking.id,
+                    orderId: orderRes.orderId,
+                    amount: orderRes.amount,
+                    currency: orderRes.currency,
+                    keyId: orderRes.keyId,
+                    seatNumbers: selectedSeats,
+                });
+            }
+        } catch (cause) {
+            setError(
+                cause instanceof Error
+                    ? cause.message
+                    : 'Failed to initiate booking payment.',
+            );
+            await loadRideData();
+        } finally {
+            setBookingInProgress(false);
+        }
+    }
+
+    async function handleVerifyPayment(
+        bookingId: string,
+        razorpayOrderId: string,
+        razorpayPaymentId: string,
+        razorpaySignature?: string,
+    ) {
+        setVerifyingPayment(true);
+        setError('');
+        try {
+            const result = await request<{
+                success: boolean;
+                booking: Booking;
+            }>('/api/payments/verify', {
+                method: 'POST',
+                body: JSON.stringify({
+                    bookingId,
+                    razorpayOrderId,
+                    razorpayPaymentId,
+                    razorpaySignature,
+                }),
+            });
+            const confirmedSeats =
+                result.booking.seatNumbers ?? paymentModal?.seatNumbers ?? [];
             setSuccessMessage(
-                `Booking requested for Seat ${selectedSeats.join(', ')}! The driver has been notified.`,
+                `Ticket is booked! Confirmed for Seat ${confirmedSeats.join(', ')}.`,
             );
             setSelectedSeats([]);
-            setMyBooking(res.booking);
+            setMyBooking(result.booking);
+            setPaymentModal((prev) =>
+                prev
+                    ? {
+                          ...prev,
+                          isSuccess: true,
+                          confirmedBooking: result.booking,
+                      }
+                    : null,
+            );
             await loadRideData();
         } catch (cause) {
             setError(
-                cause instanceof Error ? cause.message : 'Failed to request booking.',
+                cause instanceof Error ? cause.message : 'Payment verification failed.',
             );
         } finally {
-            setBookingInProgress(false);
+            setVerifyingPayment(false);
+        }
+    }
+
+    async function handleCancelPayment(
+        bookingId: string,
+        reason = 'Cancelled by passenger',
+    ) {
+        try {
+            await request('/api/payments/failed', {
+                method: 'POST',
+                body: JSON.stringify({ bookingId, reason }),
+            });
+            setError(
+                'Payment was cancelled. Your seat is not confirmed. You may retry anytime.',
+            );
+        } catch {
+            // ignore
+        } finally {
+            setPaymentModal(null);
+            await loadRideData();
         }
     }
 
@@ -377,12 +553,9 @@ export function RideDetailsPage() {
                                 </strong>
                             </div>
                             <div>
-                                <small>SMOKING</small>
+                                <small>PRICE PER SEAT</small>
                                 <strong>
-                                    <Cigarette size={14} />{' '}
-                                    {ride.preferences.smokingAllowed
-                                        ? 'Allowed'
-                                        : 'Not allowed'}
+                                    <Tag size={14} /> ₹{ride.pricePerSeat}
                                 </strong>
                             </div>
                         </div>
@@ -414,47 +587,142 @@ export function RideDetailsPage() {
                             {/* Booking Action Area */}
                             <div className='ride-booking-action-panel'>
                                 {myBooking ? (
-                                    <div
-                                        className={`active-booking-status-card status-${myBooking.status}`}
-                                    >
-                                        <div className='active-booking-info'>
-                                            {myBooking.status === 'pending' ? (
-                                                <Clock size={18} />
-                                            ) : myBooking.status === 'accepted' ? (
-                                                <CheckCircle2 size={18} />
-                                            ) : (
-                                                <XCircle size={18} />
-                                            )}
-                                            <div>
-                                                <strong>
-                                                    {myBooking.status === 'pending'
-                                                        ? 'Booking Pending Driver Approval'
-                                                        : myBooking.status === 'accepted'
-                                                          ? 'Booking Confirmed'
-                                                          : `Booking ${myBooking.status}`}
-                                                </strong>
-                                                <p>
-                                                    Seat(s):{' '}
-                                                    <b>
+                                    myBooking.status === 'accepted' ? (
+                                        <div className='confirmed-ticket-card'>
+                                            <div className='ticket-card-header'>
+                                                <div className='ticket-header-title'>
+                                                    <CheckCircle2
+                                                        size={22}
+                                                        color='#18794e'
+                                                    />
+                                                    <div>
+                                                        <strong>
+                                                            Ticket Booked & Confirmed
+                                                        </strong>
+                                                        <small>
+                                                            Wayfare Boarding Pass ·
+                                                            Instant Confirmation
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                <span className='ticket-paid-badge'>
+                                                    PAID & BOOKED
+                                                </span>
+                                            </div>
+                                            <div className='ticket-card-details'>
+                                                <div className='ticket-col'>
+                                                    <small>PASSENGER</small>
+                                                    <strong>{user?.name}</strong>
+                                                </div>
+                                                <div className='ticket-col'>
+                                                    <small>CONFIRMED SEAT(S)</small>
+                                                    <strong className='ticket-seat-tag'>
+                                                        Seat{' '}
                                                         {myBooking.seatNumbers.join(', ')}
-                                                    </b>
-                                                </p>
+                                                    </strong>
+                                                </div>
+                                                <div className='ticket-col'>
+                                                    <small>TOTAL FARE</small>
+                                                    <strong>
+                                                        ₹
+                                                        {myBooking.totalPrice ??
+                                                            myBooking.seatNumbers.length *
+                                                                (ride.pricePerSeat ??
+                                                                    250)}
+                                                    </strong>
+                                                </div>
+                                                <div className='ticket-col'>
+                                                    <small>TICKET REF</small>
+                                                    <code>
+                                                        {myBooking.id
+                                                            .slice(-8)
+                                                            .toUpperCase()}
+                                                    </code>
+                                                </div>
+                                            </div>
+                                            <div className='ticket-card-route'>
+                                                <div>
+                                                    <small>PICKUP</small>
+                                                    <p>{ride.pickup.displayName}</p>
+                                                </div>
+                                                <span className='ticket-route-arrow'>
+                                                    →
+                                                </span>
+                                                <div>
+                                                    <small>DESTINATION</small>
+                                                    <p>{ride.destination.displayName}</p>
+                                                </div>
+                                            </div>
+                                            <div className='ticket-card-footer'>
+                                                <div className='ticket-meta-info'>
+                                                    <span>
+                                                        Driver:{' '}
+                                                        <b>{ride.driver.displayName}</b>
+                                                    </span>
+                                                    <span>
+                                                        Departure:{' '}
+                                                        <b>
+                                                            {new Date(
+                                                                ride.departureAt,
+                                                            ).toLocaleString(undefined, {
+                                                                dateStyle: 'medium',
+                                                                timeStyle: 'short',
+                                                            })}
+                                                        </b>
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type='button'
+                                                    className='button button-outline ride-cancel-booking-btn'
+                                                    disabled={cancellingInProgress}
+                                                    onClick={handleCancelBooking}
+                                                >
+                                                    {cancellingInProgress
+                                                        ? 'Cancelling…'
+                                                        : 'Cancel booking'}
+                                                </button>
                                             </div>
                                         </div>
-                                        {(myBooking.status === 'pending' ||
-                                            myBooking.status === 'accepted') && (
-                                            <button
-                                                type='button'
-                                                className='button button-outline ride-cancel-booking-btn'
-                                                disabled={cancellingInProgress}
-                                                onClick={handleCancelBooking}
-                                            >
-                                                {cancellingInProgress
-                                                    ? 'Cancelling…'
-                                                    : 'Cancel booking'}
-                                            </button>
-                                        )}
-                                    </div>
+                                    ) : (
+                                        <div
+                                            className={`active-booking-status-card status-${myBooking.status}`}
+                                        >
+                                            <div className='active-booking-info'>
+                                                {myBooking.status === 'pending' ? (
+                                                    <Clock size={18} />
+                                                ) : (
+                                                    <XCircle size={18} />
+                                                )}
+                                                <div>
+                                                    <strong>
+                                                        {myBooking.status === 'pending'
+                                                            ? 'Booking Pending Driver Approval'
+                                                            : `Booking ${myBooking.status}`}
+                                                    </strong>
+                                                    <p>
+                                                        Seat(s):{' '}
+                                                        <b>
+                                                            {myBooking.seatNumbers.join(
+                                                                ', ',
+                                                            )}
+                                                        </b>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {myBooking.status === 'pending' && (
+                                                <button
+                                                    type='button'
+                                                    className='button button-outline ride-cancel-booking-btn'
+                                                    disabled={cancellingInProgress}
+                                                    onClick={handleCancelBooking}
+                                                >
+                                                    {cancellingInProgress
+                                                        ? 'Cancelling…'
+                                                        : 'Cancel booking'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )
                                 ) : isDriverOfThisRide ? (
                                     <p className='ride-booking-notice'>
                                         <ShieldAlert size={15} /> You are the driver for
@@ -476,8 +744,32 @@ export function RideDetailsPage() {
                                                         : 'None'}
                                                 </strong>
                                             </span>
+                                            {selectedSeats.length > 0 && (
+                                                <span
+                                                    style={{
+                                                        color: '#68203f',
+                                                        fontWeight: 600,
+                                                    }}
+                                                >
+                                                    Total amount:{' '}
+                                                    <strong>
+                                                        ₹
+                                                        {selectedSeats.length *
+                                                            (ride.pricePerSeat ?? 250)}
+                                                    </strong>{' '}
+                                                    <small
+                                                        style={{
+                                                            fontWeight: 400,
+                                                            color: '#7a6470',
+                                                        }}
+                                                    >
+                                                        ({selectedSeats.length} × ₹
+                                                        {ride.pricePerSeat ?? 250})
+                                                    </small>
+                                                </span>
+                                            )}
                                             <small>
-                                                Driver reviews request before confirmation
+                                                Razorpay Test Mode · Instant confirmation
                                             </small>
                                         </div>
                                         <button
@@ -490,10 +782,10 @@ export function RideDetailsPage() {
                                             onClick={handleRequestBooking}
                                         >
                                             {bookingInProgress
-                                                ? 'Requesting…'
-                                                : `Request booking (${selectedSeats.length} seat${
-                                                      selectedSeats.length > 1 ? 's' : ''
-                                                  })`}
+                                                ? 'Processing…'
+                                                : selectedSeats.length > 0
+                                                  ? `Pay & Confirm (₹${selectedSeats.length * (ride.pricePerSeat ?? 250)})`
+                                                  : 'Select a seat'}
                                         </button>
                                     </div>
                                 )}
@@ -501,6 +793,348 @@ export function RideDetailsPage() {
                         </section>
                     </article>
                 ) : null}
+
+                {/* Razorpay Test Mode In-App Checkout Modal */}
+                {paymentModal && (
+                    <div
+                        className='rating-modal-overlay'
+                        role='dialog'
+                        aria-modal='true'
+                    >
+                        <div
+                            className='rating-modal-card'
+                            style={{ maxWidth: '440px' }}
+                        >
+                            {paymentModal.isSuccess ? (
+                                <div
+                                    style={{
+                                        textAlign: 'center',
+                                        padding: '12px 6px 8px',
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            width: '54px',
+                                            height: '54px',
+                                            borderRadius: '50%',
+                                            background: '#e8f7ee',
+                                            display: 'grid',
+                                            placeItems: 'center',
+                                            margin: '0 auto 12px',
+                                        }}
+                                    >
+                                        <CheckCircle2
+                                            size={32}
+                                            color='#18794e'
+                                        />
+                                    </div>
+                                    <span
+                                        style={{
+                                            fontSize: '10px',
+                                            fontWeight: 700,
+                                            letterSpacing: '1px',
+                                            color: '#18794e',
+                                            textTransform: 'uppercase',
+                                        }}
+                                    >
+                                        CONFIRMED & PAID
+                                    </span>
+                                    <h3
+                                        style={{
+                                            margin: '4px 0 6px',
+                                            fontSize: '20px',
+                                            color: '#1d2e24',
+                                        }}
+                                    >
+                                        Ticket is Booked!
+                                    </h3>
+                                    <p
+                                        style={{
+                                            margin: '0 0 16px',
+                                            fontSize: '12px',
+                                            color: '#607267',
+                                        }}
+                                    >
+                                        Your payment of ₹{paymentModal.amount} was
+                                        verified and your seat is reserved.
+                                    </p>
+
+                                    <div
+                                        style={{
+                                            background: '#f9f6f7',
+                                            border: '1px solid #ebd7df',
+                                            borderRadius: '8px',
+                                            padding: '14px 16px',
+                                            textAlign: 'left',
+                                            marginBottom: '18px',
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                marginBottom: '8px',
+                                                fontSize: '12px',
+                                            }}
+                                        >
+                                            <span style={{ color: '#74626c' }}>
+                                                Confirmed Seat(s):
+                                            </span>
+                                            <strong
+                                                style={{
+                                                    color: '#68203f',
+                                                    fontSize: '13px',
+                                                }}
+                                            >
+                                                Seat{' '}
+                                                {paymentModal.confirmedBooking?.seatNumbers?.join(
+                                                    ', ',
+                                                ) ?? paymentModal.seatNumbers.join(', ')}
+                                            </strong>
+                                        </div>
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                marginBottom: '8px',
+                                                fontSize: '12px',
+                                            }}
+                                        >
+                                            <span style={{ color: '#74626c' }}>
+                                                Route:
+                                            </span>
+                                            <strong
+                                                style={{
+                                                    color: '#352431',
+                                                    textAlign: 'right',
+                                                    maxWidth: '65%',
+                                                }}
+                                            >
+                                                {ride?.pickup.displayName} →{' '}
+                                                {ride?.destination.displayName}
+                                            </strong>
+                                        </div>
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                marginBottom: '8px',
+                                                fontSize: '12px',
+                                            }}
+                                        >
+                                            <span style={{ color: '#74626c' }}>
+                                                Driver:
+                                            </span>
+                                            <span style={{ color: '#352431' }}>
+                                                {ride?.driver.displayName}
+                                            </span>
+                                        </div>
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                marginBottom: '8px',
+                                                fontSize: '12px',
+                                            }}
+                                        >
+                                            <span style={{ color: '#74626c' }}>
+                                                Amount Paid:
+                                            </span>
+                                            <strong style={{ color: '#18794e' }}>
+                                                ₹{paymentModal.amount}
+                                            </strong>
+                                        </div>
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                fontSize: '11px',
+                                                paddingTop: '6px',
+                                                borderTop: '1px dashed #d9c4ce',
+                                            }}
+                                        >
+                                            <span style={{ color: '#74626c' }}>
+                                                Ticket Ref:
+                                            </span>
+                                            <code>
+                                                {paymentModal.confirmedBooking?.id
+                                                    ?.slice(-8)
+                                                    .toUpperCase() ??
+                                                    paymentModal.bookingId
+                                                        .slice(-8)
+                                                        .toUpperCase()}
+                                            </code>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <button
+                                            type='button'
+                                            className='button button-burgundy'
+                                            style={{ flex: 1 }}
+                                            onClick={() => setPaymentModal(null)}
+                                        >
+                                            View Ticket
+                                        </button>
+                                        <Link
+                                            to='/bookings'
+                                            className='button button-outline'
+                                            style={{
+                                                flex: 1,
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                            }}
+                                        >
+                                            My Bookings
+                                        </Link>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className='rating-modal-header'>
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                            }}
+                                        >
+                                            <CreditCard
+                                                size={18}
+                                                color='#742b49'
+                                            />
+                                            <h3 style={{ margin: 0, fontSize: '18px' }}>
+                                                Razorpay Test Mode Checkout
+                                            </h3>
+                                        </div>
+                                        <button
+                                            type='button'
+                                            className='rating-modal-close'
+                                            onClick={() =>
+                                                void handleCancelPayment(
+                                                    paymentModal.bookingId,
+                                                    'Modal closed',
+                                                )
+                                            }
+                                            aria-label='Close'
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                    <div
+                                        style={{
+                                            padding: '16px 0',
+                                            borderBottom: '1px solid #ebd7df',
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                marginBottom: '8px',
+                                                fontSize: '13px',
+                                            }}
+                                        >
+                                            <span style={{ color: '#68545e' }}>
+                                                Selected Seats:
+                                            </span>
+                                            <strong>
+                                                Seat {paymentModal.seatNumbers.join(', ')}
+                                            </strong>
+                                        </div>
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                marginBottom: '8px',
+                                                fontSize: '13px',
+                                            }}
+                                        >
+                                            <span style={{ color: '#68545e' }}>
+                                                Price per seat:
+                                            </span>
+                                            <span>₹{ride?.pricePerSeat ?? 250}</span>
+                                        </div>
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                marginBottom: '8px',
+                                                fontSize: '12px',
+                                            }}
+                                        >
+                                            <span style={{ color: '#68545e' }}>
+                                                Order ID:
+                                            </span>
+                                            <code
+                                                style={{
+                                                    fontSize: '11px',
+                                                    background: '#f5eef1',
+                                                    padding: '2px 5px',
+                                                    borderRadius: '3px',
+                                                }}
+                                            >
+                                                {paymentModal.orderId}
+                                            </code>
+                                        </div>
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                marginTop: '12px',
+                                                fontSize: '16px',
+                                                fontWeight: 700,
+                                                color: '#4a2537',
+                                            }}
+                                        >
+                                            <span>Total Amount:</span>
+                                            <span>₹{paymentModal.amount}</span>
+                                        </div>
+                                    </div>
+                                    <div
+                                        style={{
+                                            marginTop: '16px',
+                                            display: 'grid',
+                                            gap: '10px',
+                                        }}
+                                    >
+                                        <button
+                                            type='button'
+                                            className='button button-burgundy'
+                                            disabled={verifyingPayment}
+                                            onClick={() =>
+                                                void handleVerifyPayment(
+                                                    paymentModal.bookingId,
+                                                    paymentModal.orderId,
+                                                    `pay_test_${Date.now()}`,
+                                                    'test_signature_mock',
+                                                )
+                                            }
+                                        >
+                                            {verifyingPayment
+                                                ? 'Verifying payment…'
+                                                : `Pay ₹${paymentModal.amount}`}
+                                        </button>
+                                        <button
+                                            type='button'
+                                            className='button button-outline text-danger'
+                                            disabled={verifyingPayment}
+                                            onClick={() =>
+                                                void handleCancelPayment(
+                                                    paymentModal.bookingId,
+                                                    'Simulated payment failure by user',
+                                                )
+                                            }
+                                        >
+                                            Simulate Payment Failure
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* SOS Emergency Confirmation Modal */}
                 {sosModalOpen && (

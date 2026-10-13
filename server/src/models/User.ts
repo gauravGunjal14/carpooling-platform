@@ -8,6 +8,7 @@ export interface UserFields {
     role: Role;
     status: 'active' | 'disabled';
     driverTier?: 'standard' | 'pro';
+    womenOnlyEligible?: boolean;
     refreshTokenHash?: string;
     refreshTokenExpiresAt?: Date;
     createdAt: Date;
@@ -45,6 +46,10 @@ const userSchema = new Schema<UserFields>(
             type: String,
             enum: ['standard', 'pro'],
             default: 'standard',
+        },
+        womenOnlyEligible: {
+            type: Boolean,
+            default: false,
         },
         refreshTokenHash: { type: String, select: false },
         refreshTokenExpiresAt: { type: Date, select: false },

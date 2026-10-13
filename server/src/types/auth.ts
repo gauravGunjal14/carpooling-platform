@@ -7,6 +7,7 @@ export type SafeUser = {
     email: string;
     role: Role;
     driverTier?: 'standard' | 'pro';
+    womenOnlyEligible?: boolean;
     createdAt?: Date;
 };
 

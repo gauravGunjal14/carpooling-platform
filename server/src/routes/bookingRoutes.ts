@@ -16,9 +16,9 @@ const router = Router();
 router.use(requireTrustedOrigin);
 router.use(authenticate);
 
-// Passenger endpoints
+// User bookings endpoint
+router.get('/mine', getMyBookingsController);
 router.post('/', authorize('Passenger'), createBookingController);
-router.get('/mine', authorize('Passenger'), getMyBookingsController);
 router.patch('/:id/cancel', authorize('Passenger'), cancelBookingController);
 
 // Driver endpoints

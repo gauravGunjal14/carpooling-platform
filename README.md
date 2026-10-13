@@ -18,25 +18,29 @@ Wayfare is a production-oriented, full-stack MERN carpooling platform designed t
 ## Features
 
 ### Authentication & Security
+
 - **Role-Based Access Control:** Strict role segregation across `Passenger`, `Driver`, and `Admin` tiers with route-level authorization guards.
 - **Dual JWT Token Architecture:** Short-lived access tokens paired with rotating refresh tokens stored in secure, `httpOnly`, `SameSite` cookies.
 - **Cryptographic Password Security:** Salting and hashing via `bcryptjs` with timing-safe comparisons.
 - **System Protection:** Security headers powered by `Helmet`, CORS origin whitelisting, and Express rate limiting to prevent abuse.
 
 ### Smart Ride Matching
+
 - **Geographic Proximity Matching:** Calculates distance using the Haversine formula across pickup and destination coordinates within a configurable radius (up to 30 km).
 - **Time Window Compatibility:** Evaluates scheduled departures against preferred passenger travel windows (default ±120 minutes).
 - **Multi-Factor Scoring Engine:** Normalizes route proximity, time alignment, seat capacity, and driver verification badges into a composite match percentage.
-- **Explainable Transparency:** Surfaces human-readable match explanations (e.g., *"Pickup within 2.1 km"*, *"Verified driver"*, *"Exact destination match"*).
+- **Explainable Transparency:** Surfaces human-readable match explanations (e.g., _"Pickup within 2.1 km"_, _"Verified driver"_, _"Exact destination match"_).
 
 ### Ride & Booking Management
-- **Driver Ride Publishing:** Interactive place search with OpenStreetMap and Nominatim, Leaflet route visualization, seat pricing, luggage allowance, and smoking rules.
+
+- **Driver Ride Publishing:** Interactive place search with OpenStreetMap and Nominatim, Leaflet route visualization, seat pricing, and luggage allowance.
 - **Interactive Seat Map:** Visual vehicle layout with selectable seats, real-time availability states, and user seat highlighting.
 - **Atomic Seat Reservation:** Race-condition-safe seat locking in MongoDB preventing double-booking during concurrent passenger checkouts.
 - **Driver Request Management:** Dedicated dashboard for reviewing incoming seat requests with 1-click acceptance or decline workflows.
 - **Full Ride Lifecycle:** Complete state transitions from `scheduled` to `active` (in-progress), `completed`, or `cancelled`.
 
 ### Trust & Verification
+
 - **Credential Submission:** Drivers submit driving licences and passengers submit identity documents via multipart uploads.
 - **Private Encrypted Storage:** Uploaded verification files are stored privately on the server with SHA-256 integrity checksums, never served publicly.
 - **Administrative Review Queue:** Authorized admins inspect credentials, approve/reject submissions, record audit notes, and grant verified status.
@@ -44,17 +48,20 @@ Wayfare is a production-oriented, full-stack MERN carpooling platform designed t
 - **Post-Trip Feedback:** Bilateral ratings (1–5 stars) and reviews unlocked automatically upon journey completion.
 
 ### Women Safety
+
 - **Dedicated Women-Only Rides:** Drivers can restrict journeys exclusively to eligible women passengers.
 - **Backend-Enforced Eligibility:** Access is authorized by an administrative review flag on approved identity documents, avoiding raw gender classification.
 - **Filtered Discovery:** Ineligible accounts cannot view, search, or book women-only listings.
 - **SOS Emergency Alert System:** Confirmed riders or drivers can trigger emergency alerts during active trips with category classification (`medical`, `accident`, `unsafe_behavior`, `route_deviation`, `general`), real-time socket broadcast, and notification logging.
 
 ### Real-Time Features
+
 - **Bidirectional Socket.IO Events:** Live updates for booking submissions, driver acceptance/rejection, cancellations, and trip progression.
 - **Dynamic Notifications:** Instant alerts delivered to user notifications and dashboard views without page refresh.
 - **Live SOS Dispatch:** Instant alert broadcast to all trip participants and administrators.
 
 ### Payments & Notifications
+
 - **Flexible Mock Gateway:** Simulates UPI, Google Pay, PhonePe, credit/debit card, and net banking transactions.
 - **Razorpay-Ready Architecture:** Clean separation of payment controllers, transaction references, and webhook abstraction ready for production gateway integration.
 - **Automated Refund Logic:** Built-in cancellation refund workflows reflecting platform cancellation windows.
@@ -62,10 +69,12 @@ Wayfare is a production-oriented, full-stack MERN carpooling platform designed t
 - **In-App Notification Center:** Unread count indicators, category icons, and mark-as-read functionality.
 
 ### Smart Suggestions & Pro Tiers
+
 - **History-Based Recommendations:** Suggests future trips based on passenger travel history and frequent routes.
 - **Pro Driver Membership:** Monthly subscription tier unlocking priority ride discovery, exclusive Pro badges, and relaxed cancellation cutoff windows (12 hours vs. standard 30 hours).
 
 ### Admin Dashboard
+
 - **Verification Management:** Document queue review with inline PDF/image preview, document approval, rejection feedback, and eligibility grants.
 - **Platform Oversight:** APIs for monitoring registered users, active journeys, and platform verification statistics.
 
@@ -73,22 +82,22 @@ Wayfare is a production-oriented, full-stack MERN carpooling platform designed t
 
 ## Tech Stack
 
-| Layer | Technology | Purpose & Implementation |
-| :--- | :--- | :--- |
-| **Frontend Framework** | React 19, TypeScript | Reactive, type-safe single-page web client |
-| **Build Tool** | Vite 6 | Fast HMR development server and optimized production bundler |
-| **Styling & Icons** | Tailwind CSS 4, Lucide React | Modern responsive design system, custom typography, clean iconography |
-| **Mapping & Geospatial** | Leaflet, React Leaflet | Interactive vehicle seat layout, map rendering, and route display |
-| **Geocoding & Places** | OpenStreetMap, Nominatim | Rate-conscious server-proxied location discovery and search |
-| **Backend Runtime** | Node.js (ESM), Express.js | High-performance modular REST API and websocket server |
-| **Language** | TypeScript 5 | Strict static typing end-to-end across models, APIs, and client hooks |
-| **Database & ODM** | MongoDB, Mongoose 9 | Document storage, geospatial indexing (`2dsphere`), and schema validation |
-| **Real-Time Engine** | Socket.IO | Bidirectional event transport for booking events, alerts, and SOS |
-| **Authentication** | JWT, bcryptjs, cookie-parser | Access/refresh token lifecycle, password hashing, and secure cookies |
-| **Security & Validation** | Zod, Helmet, express-rate-limit | Strict request payload validation, HTTP security headers, and rate limiting |
-| **Communications** | Nodemailer | Transactional email delivery for bookings and lifecycle events |
-| **Payment Architecture** | Razorpay-ready abstraction | Simulated UPI/Card checkout with scalable refund hooks |
-| **Tooling & Monorepo** | npm Workspaces, Prettier, Concurrently | Monorepo task orchestration, code formatting, and parallel execution |
+| Layer                     | Technology                             | Purpose & Implementation                                                    |
+| :------------------------ | :------------------------------------- | :-------------------------------------------------------------------------- |
+| **Frontend Framework**    | React 19, TypeScript                   | Reactive, type-safe single-page web client                                  |
+| **Build Tool**            | Vite 6                                 | Fast HMR development server and optimized production bundler                |
+| **Styling & Icons**       | Tailwind CSS 4, Lucide React           | Modern responsive design system, custom typography, clean iconography       |
+| **Mapping & Geospatial**  | Leaflet, React Leaflet                 | Interactive vehicle seat layout, map rendering, and route display           |
+| **Geocoding & Places**    | OpenStreetMap, Nominatim               | Rate-conscious server-proxied location discovery and search                 |
+| **Backend Runtime**       | Node.js (ESM), Express.js              | High-performance modular REST API and websocket server                      |
+| **Language**              | TypeScript 5                           | Strict static typing end-to-end across models, APIs, and client hooks       |
+| **Database & ODM**        | MongoDB, Mongoose 9                    | Document storage, geospatial indexing (`2dsphere`), and schema validation   |
+| **Real-Time Engine**      | Socket.IO                              | Bidirectional event transport for booking events, alerts, and SOS           |
+| **Authentication**        | JWT, bcryptjs, cookie-parser           | Access/refresh token lifecycle, password hashing, and secure cookies        |
+| **Security & Validation** | Zod, Helmet, express-rate-limit        | Strict request payload validation, HTTP security headers, and rate limiting |
+| **Communications**        | Nodemailer                             | Transactional email delivery for bookings and lifecycle events              |
+| **Payment Architecture**  | Razorpay-ready abstraction             | Simulated UPI/Card checkout with scalable refund hooks                      |
+| **Tooling & Monorepo**    | npm Workspaces, Prettier, Concurrently | Monorepo task orchestration, code formatting, and parallel execution        |
 
 ---
 
@@ -157,66 +166,75 @@ carpooling-platform/
 ### Installation & Setup
 
 1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/gauravGunjal14/carpooling-platform.git
-   cd carpooling-platform
-   ```
+
+    ```bash
+    git clone https://github.com/gauravGunjal14/carpooling-platform.git
+    cd carpooling-platform
+    ```
 
 2. **Install all dependencies:**
-   ```bash
-   npm install
-   ```
+
+    ```bash
+    npm install
+    ```
 
 3. **Configure environment variables:**
    Copy the example environment configuration to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-   Open `.env` and configure your credentials:
-   ```env
-   NODE_ENV=development
-   PORT=4000
-   MONGODB_URI=mongodb://127.0.0.1:27017/wayfare
-   JWT_ACCESS_SECRET=your_super_secret_access_jwt_key
-   JWT_REFRESH_SECRET=your_super_secret_refresh_jwt_key
-   CLIENT_ORIGIN=http://localhost:5173
-   ```
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    Open `.env` and configure your credentials:
+
+    ```env
+    NODE_ENV=development
+    PORT=4000
+    MONGODB_URI=mongodb://127.0.0.1:27017/wayfare
+    JWT_ACCESS_SECRET=your_super_secret_access_jwt_key
+    JWT_REFRESH_SECRET=your_super_secret_refresh_jwt_key
+    CLIENT_ORIGIN=http://localhost:5173
+    ```
 
 4. **Provision an Administrator Account:**
    Administrative accounts cannot be registered publicly. Temporarily configure admin credentials in `.env`:
-   ```env
-   ADMIN_NAME=Admin User
-   ADMIN_EMAIL=admin@wayfare.internal
-   ADMIN_PASSWORD=YourStrongPassword123!
-   ```
-   Then execute the administrative provisioning script:
-   ```bash
-   npm run create-admin
-   ```
-   *(You can remove `ADMIN_*` environment variables after initial setup).*
+
+    ```env
+    ADMIN_NAME=Admin User
+    ADMIN_EMAIL=admin@wayfare.internal
+    ADMIN_PASSWORD=YourStrongPassword123!
+    ```
+
+    Then execute the administrative provisioning script:
+
+    ```bash
+    npm run create-admin
+    ```
+
+    _(You can remove `ADMIN_*` environment variables after initial setup)._
 
 5. **Start the development servers:**
-   ```bash
-   npm run dev
-   ```
-   This starts:
-   - **Frontend Client:** `http://localhost:5173`
-   - **Backend API Server:** `http://localhost:4000`
+    ```bash
+    npm run dev
+    ```
+    This starts:
+    - **Frontend Client:** `http://localhost:5173`
+    - **Backend API Server:** `http://localhost:4000`
 
 ---
 
 ## Available Scripts
 
-| Command | Description |
-| :--- | :--- |
-| `npm run dev` | Runs both client and server concurrently in development mode |
-| `npm run client` | Runs the Vite client development server |
-| `npm run server` | Runs the Node.js Express server with live reload (`tsx watch`) |
-| `npm run create-admin` | Executes the administrative CLI account provisioning script |
-| `npm run build` | Builds both the frontend Vite bundle and server TypeScript code |
-| `npm run typecheck` | Validates TypeScript types across both client and server without emitting files |
-| `npm run format` | Automatically formats the entire codebase using Prettier |
-| `npm run format:check` | Verifies that all files conform to the project's Prettier configuration |
+| Command                | Description                                                                     |
+| :--------------------- | :------------------------------------------------------------------------------ |
+| `npm run dev`          | Runs both client and server concurrently in development mode                    |
+| `npm run client`       | Runs the Vite client development server                                         |
+| `npm run server`       | Runs the Node.js Express server with live reload (`tsx watch`)                  |
+| `npm run create-admin` | Executes the administrative CLI account provisioning script                     |
+| `npm run build`        | Builds both the frontend Vite bundle and server TypeScript code                 |
+| `npm run typecheck`    | Validates TypeScript types across both client and server without emitting files |
+| `npm run format`       | Automatically formats the entire codebase using Prettier                        |
+| `npm run format:check` | Verifies that all files conform to the project's Prettier configuration         |
 
 ---
 

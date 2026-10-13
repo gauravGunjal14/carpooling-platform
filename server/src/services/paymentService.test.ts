@@ -73,7 +73,7 @@ test('Phase 9: Payment, Refund & Email Architecture', async (t) => {
         availableSeats: 2,
         occupiedSeats: [1, 2],
         pricePerSeat: 300,
-        preferences: { smokingAllowed: false, luggage: 'standard', notes: '' },
+        preferences: { luggage: 'standard', notes: '' },
         womenOnly: false,
         status: 'scheduled',
     });
@@ -101,21 +101,23 @@ test('Phase 9: Payment, Refund & Email Architecture', async (t) => {
             paymentStatus: 'unpaid',
         });
 
-        await assert.rejects(
-            async () => {
-                await processMockPayment(passenger, {
-                    bookingId: pendingBooking._id.toString(),
-                    paymentMethod: 'upi',
-                });
-            },
-            {
-                name: 'AppError',
-                message:
-                    "Payments can only be made for accepted bookings. Current status is 'pending'.",
-            },
-        );
-
-        await Booking.deleteOne({ _id: pendingBooking._id });
+        try {
+            await assert.rejects(
+                async () => {
+                    await processMockPayment(passenger, {
+                        bookingId: pendingBooking._id.toString(),
+                        paymentMethod: 'upi',
+                    });
+                },
+                {
+                    name: 'AppError',
+                    message:
+                        "Payments can only be made for accepted bookings. Current status is 'pending'.",
+                },
+            );
+        } finally {
+            await Booking.deleteOne({ _id: pendingBooking._id });
+        }
     });
 
     await t.test(

@@ -451,26 +451,43 @@ export function AdminVerificationPage() {
                                 </button>
                                 {submission.status === 'pending' && (
                                     <>
-                                        <label className='verification-review-eligibility'>
-                                            <input
-                                                type='checkbox'
-                                                checked={
-                                                    eligibility[submission.id] ??
-                                                    submission.womenOnlyEligible
-                                                }
-                                                onChange={(event) =>
-                                                    setEligibility((current) => ({
-                                                        ...current,
-                                                        [submission.id]:
-                                                            event.target.checked,
-                                                    }))
-                                                }
-                                            />
-                                            <span>
-                                                Grant eligibility for Women-only rides
-                                                after reviewing this document
+                                        <div className='verification-permission-section'>
+                                            <span className='verification-permission-heading'>
+                                                Women Only Ride Permission
                                             </span>
-                                        </label>
+                                            <div className='verification-permission-options'>
+                                                <button
+                                                    type='button'
+                                                    className={`verification-permission-btn ${(eligibility[submission.id] ?? submission.womenOnlyEligible) === true ? 'is-selected is-allow' : ''}`}
+                                                    onClick={() =>
+                                                        setEligibility((current) => ({
+                                                            ...current,
+                                                            [submission.id]: true,
+                                                        }))
+                                                    }
+                                                >
+                                                    Allow
+                                                </button>
+                                                <button
+                                                    type='button'
+                                                    className={`verification-permission-btn ${(eligibility[submission.id] ?? submission.womenOnlyEligible) === false ? 'is-selected is-disallow' : ''}`}
+                                                    onClick={() =>
+                                                        setEligibility((current) => ({
+                                                            ...current,
+                                                            [submission.id]: false,
+                                                        }))
+                                                    }
+                                                >
+                                                    Do Not Allow
+                                                </button>
+                                            </div>
+                                            <small className='verification-permission-hint'>
+                                                {(eligibility[submission.id] ??
+                                                submission.womenOnlyEligible)
+                                                    ? 'Women-only ride creation will be enabled for this driver upon approval.'
+                                                    : 'Standard rides only. Women-only ride option will stay disabled.'}
+                                            </small>
+                                        </div>
                                         <label className='auth-field verification-review-note'>
                                             <span>
                                                 Review note{' '}

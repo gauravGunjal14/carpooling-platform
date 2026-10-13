@@ -17,7 +17,6 @@ export interface RideFields {
     availableSeats: number;
     occupiedSeats: number[];
     preferences: {
-        smokingAllowed: boolean;
         luggage: 'small' | 'standard' | 'large';
         notes: string;
     };
@@ -82,7 +81,6 @@ const rideSchema = new Schema<RideFields>(
         availableSeats: { type: Number, required: true, min: 0, max: 6 },
         occupiedSeats: { type: [Number], default: [] },
         preferences: {
-            smokingAllowed: { type: Boolean, default: false, required: true },
             luggage: {
                 type: String,
                 enum: ['small', 'standard', 'large'],
@@ -91,7 +89,7 @@ const rideSchema = new Schema<RideFields>(
             },
             notes: { type: String, trim: true, maxlength: 240, default: '' },
         },
-        pricePerSeat: { type: Number, required: true, min: 0, default: 250 },
+        pricePerSeat: { type: Number, required: true, min: 50, max: 10000, default: 250 },
         womenOnly: { type: Boolean, default: false, required: true },
         status: {
             type: String,

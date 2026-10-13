@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import {
+    createPaymentOrderController,
     getBookingPaymentController,
     getMyPaymentsController,
+    paymentFailedController,
     paymentWebhookController,
     processMockPaymentController,
+    verifyPaymentController,
 } from '../controllers/paymentController.js';
 import { authenticate, authorize } from '../middleware/authenticate.js';
 import { requireTrustedOrigin } from '../middleware/requireTrustedOrigin.js';
@@ -17,6 +20,9 @@ router.use(requireTrustedOrigin);
 router.use(authenticate);
 
 // Passenger payment actions
+router.post('/order', authorize('Passenger'), createPaymentOrderController);
+router.post('/verify', authorize('Passenger'), verifyPaymentController);
+router.post('/failed', authorize('Passenger'), paymentFailedController);
 router.post('/mock', authorize('Passenger'), processMockPaymentController);
 router.get('/my', authorize('Passenger'), getMyPaymentsController);
 

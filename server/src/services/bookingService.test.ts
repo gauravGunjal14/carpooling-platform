@@ -19,10 +19,6 @@ test.before(async () => {
     await connectDatabase();
 });
 
-test.after(async () => {
-    await mongoose.disconnect();
-});
-
 test('Booking validation: rejects invalid ride IDs', async () => {
     const passenger: SafeUser = {
         id: new Types.ObjectId().toString(),
@@ -117,7 +113,6 @@ test('Booking workflow & constraint tests against MongoDB', async () => {
         totalSeats: 2,
         availableSeats: 2,
         preferences: {
-            smokingAllowed: false,
             luggage: 'standard',
             notes: 'Test trip',
         },
@@ -242,7 +237,7 @@ test('Concurrent overbooking: two passengers attempting final seat simultaneousl
         departureAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         totalSeats: 1,
         availableSeats: 1,
-        preferences: { smokingAllowed: false, luggage: 'standard', notes: '' },
+        preferences: { luggage: 'standard', notes: '' },
         womenOnly: false,
         status: 'scheduled',
     });
@@ -286,4 +281,5 @@ test('Concurrent overbooking: two passengers attempting final seat simultaneousl
     await Booking.deleteMany({ rideId: ride._id });
     await Ride.deleteOne({ _id: ride._id });
     await User.deleteMany({ _id: { $in: [driver._id, pA._id, pB._id] } });
+    await mongoose.disconnect();
 });

@@ -16,10 +16,6 @@ test.before(async () => {
     await connectDatabase();
 });
 
-test.after(async () => {
-    await mongoose.disconnect();
-});
-
 test('Ratings & Trust: full lifecycle, validation, constraints, and trust calculations', async () => {
     // 1. Create a Driver and a Passenger
     const driver = await User.create({
@@ -76,7 +72,7 @@ test('Ratings & Trust: full lifecycle, validation, constraints, and trust calcul
         totalSeats: 3,
         availableSeats: 2,
         occupiedSeats: [1],
-        preferences: { smokingAllowed: false, luggage: 'standard', notes: '' },
+        preferences: { luggage: 'standard', notes: '' },
         womenOnly: false,
         status: 'scheduled',
     });
@@ -236,7 +232,7 @@ test('Cancellation rules: Standard Driver (30h) vs Pro Driver (12h)', async () =
         totalSeats: 3,
         availableSeats: 3,
         occupiedSeats: [],
-        preferences: { smokingAllowed: false, luggage: 'standard', notes: '' },
+        preferences: { luggage: 'standard', notes: '' },
         womenOnly: false,
         status: 'scheduled',
     });
@@ -261,7 +257,7 @@ test('Cancellation rules: Standard Driver (30h) vs Pro Driver (12h)', async () =
         totalSeats: 3,
         availableSeats: 3,
         occupiedSeats: [],
-        preferences: { smokingAllowed: false, luggage: 'standard', notes: '' },
+        preferences: { luggage: 'standard', notes: '' },
         womenOnly: false,
         status: 'scheduled',
     });
@@ -282,4 +278,5 @@ test('Cancellation rules: Standard Driver (30h) vs Pro Driver (12h)', async () =
     // Cleanup
     await Ride.deleteMany({ _id: { $in: [rideStd._id, ridePro._id] } });
     await User.deleteMany({ _id: { $in: [standardDriver._id, proDriver._id] } });
+    await mongoose.disconnect();
 });
