@@ -1,0 +1,722 @@
+\documentclass[12pt,a4paper,oneside]{report}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage[a4paper,top=24mm,bottom=20mm,left=23mm,right=17mm,headheight=15pt]{geometry}
+\usepackage{graphicx}
+\usepackage{array,booktabs,longtable,tabularx}
+\usepackage{ragged2e}
+\usepackage{setspace}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+
+\graphicspath{{assets/}}
+\setstretch{1.15}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\setlength{\emergencystretch}{2em}
+\captionsetup{font=small,labelfont=normal,justification=centering}
+\renewcommand{\arraystretch}{1.22}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\centering}
+  {\fontsize{18pt}{22pt}\selectfont Chapter \thechapter}
+  {0.7em}
+  {\fontsize{16pt}{19pt}\selectfont}
+\titlespacing*{\chapter}{0pt}{14cm}{1cm}
+\titleformat{\section}{\normalfont\bfseries\fontsize{14pt}{17pt}\selectfont} {\thesection}{0.65em}{}
+\titleformat{\subsection}{\normalfont\bfseries}{\thesubsection}{0.65em}{}
+
+\newcommand{\frontheading}[1]{%
+  \begin{center}\vspace*{0.2cm}{\Large\bfseries #1}\end{center}\vspace{0.8cm}}
+\newcommand{\signatureline}[1]{%
+  \begin{minipage}[t]{0.42\textwidth}\centering
+  \vspace{1.4cm}\rule{0.85\linewidth}{0.4pt}\\[-0.1em]#1
+  \end{minipage}}
+\newcommand{\fullfigure}[3][0.86\textwidth]{%
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=#1,height=0.61\textheight,keepaspectratio]{#2}
+    \caption{#3}
+  \end{figure}}
+
+\begin{document}
+\pagenumbering{gobble}
+
+% -----------------------------------------------------------------------------
+% Title page
+% -----------------------------------------------------------------------------
+\begin{titlepage}
+\begin{center}
+\vspace*{0.3cm}
+{\large Project Report on}\par
+\vspace{0.55cm}
+{\LARGE\bfseries Intelligent Trust-Aware Carpooling Platform}\par
+\vspace{0.5cm}
+Submitted in partial fulfilment of the requirements of the degree of\par
+\vspace{0.35cm}
+{\large\bfseries BACHELOR OF ENGINEERING}\par
+\vspace{0.3cm}
+In\par
+\vspace{0.3cm}
+{\large\bfseries INFORMATION TECHNOLOGY ENGINEERING}\par
+\vspace{0.35cm}
+by\par
+\vspace{0.3cm}
+{\bfseries
+Harshit Arekar (233101)\\
+Ayush Bari (233103)\\
+Hardik Dadode (233106)\\
+Gaurav Gunjal (233108)}\par
+\vspace{0.35cm}
+Under the guidance of\par
+{\bfseries Prof. Sneha Sankhe}\par
+\vspace{0.7cm}
+\includegraphics[height=3.1cm]{image1.jpeg}\par
+\vspace{0.7cm}
+{\large\bfseries Department of Information Technology Engineering}\par
+\vspace{0.25cm}
+{\large\bfseries Theem College of Engineering, Boisar}\par
+\vspace{0.18cm}
+Boisar Chilhar Road, Boisar (E), Palghar\par
+\vspace{0.25cm}
+{\large\bfseries University of Mumbai}\par
+2026--27
+\end{center}
+\end{titlepage}
+
+% -----------------------------------------------------------------------------
+% Certificate
+% -----------------------------------------------------------------------------
+\clearpage
+\frontheading{CERTIFICATE}
+\justifying
+This is to certify that the ROSP mini project entitled \textbf{``Intelligent
+Trust-Aware Carpooling Platform''} is a bonafide work of \textbf{``Harshit Arekar
+(233101), Ayush Bari (233103), Hardik Dadode (233106), and Gaurav Gunjal
+(233108)''} submitted to the University of Mumbai in partial fulfilment of the
+requirement for the award of the degree of \textbf{``Information Technology
+Engineering''} during the academic year 2026--27.
+
+\vspace{3cm}
+\begin{center}
+Prof. Sneha Sankhe\\Guide
+\end{center}
+\vspace{1.0cm}
+\noindent
+\begin{minipage}[t]{0.45\textwidth}\centering
+\\
+Prof. Sneha Sankhe\\HOD IT
+\end{minipage}\hfill
+\begin{minipage}[t]{0.45\textwidth}\centering
+\\
+Dr. Riyazoddin Siddiqui\\Principal
+\end{minipage}
+\vspace{1.2cm}
+
+% -----------------------------------------------------------------------------
+% Approval
+% -----------------------------------------------------------------------------
+\clearpage
+\frontheading{ROSP Mini Project Report Approval}
+\justifying
+This ROSP mini project synopsis entitled \textit{\textbf{Intelligent Trust-Aware
+Carpooling Platform}} by \textit{\textbf{Harshit Arekar (233101), Ayush Bari (233103),
+Hardik Dadode (233106), Gaurav Gunjal (233108)}} is approved for the degree
+of \textit{\textbf{Information Technology Engineering}} from the \textit{\textbf{University of
+Mumbai}}.
+
+\vspace{8cm}
+\noindent
+INTERNAL EXAMINER\hfill
+EXTERNAL EXAMINER
+
+\vspace{1.6cm}
+\noindent Date:\\[0.35em]
+Place:
+\vspace{1.0cm}
+
+% -----------------------------------------------------------------------------
+% Declaration
+% -----------------------------------------------------------------------------
+\clearpage
+\frontheading{Declaration}
+\justifying
+We declare that this written submission represents our ideas in our own words
+and, where others' ideas or words have been included, we have adequately cited
+and referenced the original sources. We also declare that we have adhered to
+all principles of academic honesty and integrity and have not misrepresented,
+fabricated, or falsified any idea, data, fact, or source in our submission. We
+understand that any violation of the above will be cause for disciplinary
+action by the Institute and can also evoke penal action from the sources that
+have not been properly cited or from whom proper permission has not been taken
+when needed.
+
+\vspace{2cm}
+\begin{flushright}
+\signatureline{Harshit Arekar (233101)}\\[0.1cm]
+\signatureline{Ayush Bari (233103)}\\[0.1cm]
+\signatureline{Hardik Dadode (233106)}\\[0.1cm]
+\signatureline{Gaurav Gunjal (233108)}
+\end{flushright}
+\vspace{2cm}
+\noindent Date:
+
+% -----------------------------------------------------------------------------
+% Abstract
+% -----------------------------------------------------------------------------
+\clearpage
+\frontheading{Abstract}
+\justifying
+The Intelligent Trust-Aware Carpooling Platform is designed to simplify and
+centralize the process of creating, searching, matching, booking, and managing
+shared rides. The system enables drivers to create rides by providing details
+such as source, destination, date, time, and available seats, while passengers
+can search for suitable rides based on their travel requirements and
+preferences. The platform displays suitable rides and allows passengers to
+view ride details and submit booking requests. Drivers can review booking
+requests and accept or reject them, after which the booking status is updated
+and confirmation is provided to the passenger. The system also maintains ride
+status and provides notifications related to booking and ride activities. A
+rating and review feature allows users to provide feedback after completing a
+ride. 
+\vspace{0pt}
+The proposed system follows a full-stack MERN architecture using React.js,
+Node.js, Express.js, MongoDB, and Mongoose, with secure authentication and
+role-based functionality for drivers and passengers. The system is designed
+with a responsive interface to provide convenient access across different
+devices. It also focuses on secure data management, scalable architecture, and
+efficient communication between users and the platform. The ride-matching
+functionality helps passengers find compatible rides according to routes and
+schedules. The platform aims to provide a user-friendly, scalable, and reliable
+carpooling solution while helping users share travel costs, reduce unnecessary
+vehicles on roads, and contribute to reducing traffic congestion and
+environmental impact.
+
+\vfill
+\setlength{\parindent}{0pt}
+\textbf{Keywords:} Intelligent Carpooling, Trust-Aware Carpooling, Ride
+Matching, Ride Booking, Route Matching, Secure Authentication, Ratings and
+Reviews, MERN Stack, Traffic Reduction.
+
+% -----------------------------------------------------------------------------
+% Report organization
+% -----------------------------------------------------------------------------
+\clearpage
+The organization of this report is as follows.\par
+\vspace{0.5cm}
+Chapter 1: Introduction\par
+This chapter gives a brief introduction about “Intelligent Trust-Aware Carpooling Platform” furthermore includes Motivation, Problem definition, Aim and Scope of the project.
+\par
+\vspace{0.5cm}
+Chapter 2: Literature Survey\par
+This Chapter divided in two sections; first one is background of the project and second is literature survey comparative analysis of related papers.\par
+\vspace{0.5cm}
+Chapter 3: System Architecture\par
+This chapter provides implementation details of the project in system design which gives information about the necessary things required for project implementation. It also provides information regarding the proposed system architecture to understand the project.\par
+\vspace{0.5cm}
+Chapter 4: System Design\par
+This chapter presents different diagrams like Use-Case diagram, Activity diagram, Sequence diagram, Class Diagram to understand connectivity and flow of various activities.\par
+\vspace{0.5cm}
+Chapter 5: Result and Discussion\par
+This chapter presents screenshots of system and discussion on working to understand various activities.\par
+\vspace{0.5cm}
+Chapter 6: Conclusion and Future Scope\par
+This chapter presents the lessons learned represented with the conclusion and the area where work can be further carried out in further represented with future scope.
+
+\clearpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% -----------------------------------------------------------------------------
+\chapter{Introduction}
+
+\section{An Overview}
+The Intelligent Trust-Aware Carpooling Platform is a web-based system designed
+to connect drivers and passengers travelling on similar routes and schedules.
+The platform allows drivers to create rides by providing details such as
+source, destination, date, time, and available seats. Passengers can search for
+suitable rides based on their travel requirements and preferences. The system
+provides suitable ride options and allows passengers to view ride details
+before booking. Drivers can review booking requests and accept or reject them.
+The platform maintains booking and ride status and provides notifications for
+important activities. A rating and review feature helps users provide feedback
+after completing a ride. The system uses the MERN stack, including React.js,
+Node.js, Express.js, and MongoDB. The platform aims to provide a secure,
+reliable, convenient, and trust-aware carpooling experience.
+
+\section{Motivation}
+Today, people often face problems such as increasing traffic, high travel
+costs, and inefficient use of private vehicles. At the same time, many drivers
+travel with empty seats while passengers look for affordable and convenient
+transportation. Finding a suitable and trustworthy person for sharing a ride
+can also be difficult. These challenges motivate the development of the
+Intelligent Trust-Aware Carpooling Platform, which aims to connect drivers and
+passengers travelling on similar routes. The platform helps users find
+suitable rides, manage bookings, and build trust through ratings and reviews.
+It also aims to reduce travel costs, traffic congestion, and unnecessary
+vehicle usage.
+
+\section{Problem Definition}
+The existing carpooling process often lacks an efficient way to connect
+passengers with suitable rides based on their routes and schedules. Passengers
+may face difficulties in finding available rides, checking ride details, and
+making reliable bookings. Drivers may also have problems managing ride details
+and handling booking requests from passengers. In addition, the lack of proper
+trust information can make users hesitant to share rides with unknown people.
+Therefore, there is a need for an Intelligent Trust-Aware Carpooling Platform
+that provides efficient ride matching, booking management, ride status
+updates, notifications, and ratings and reviews to support a safer and more
+reliable carpooling experience.
+
+\section{Aim}
+The aim is to provide a secure and user-friendly platform connecting drivers and passengers travelling on similar routes and schedules. The system enables efficient ride matching, searching, creation, and management based on user requirements. Passengers can view ride details and submit booking requests, while drivers can accept or reject them. The platform provides booking and ride status updates along with notifications for important activities. Ratings and reviews help build trust and reliability among users. The system simplifies carpooling, reduces travel costs, improves vehicle seat utilization, and contributes to reducing traffic congestion and unnecessary vehicle usage.
+
+\section{Scope}
+The scope includes creating, searching, matching, booking, and managing shared rides. Drivers can create and manage rides by specifying routes, dates, times, and available seats, while passengers can search for suitable rides, view details, and submit booking requests. Drivers can accept or reject requests and update ride status. The system provides booking confirmations, notifications, and ratings and reviews to improve trust and reliability. Secure authentication and role-based access ensure controlled platform usage. It also helps reduce travel costs, traffic congestion, and unnecessary vehicle usage. Future enhancements may include real-time communication, live ride tracking, and advanced ride-matching features.
+
+% -----------------------------------------------------------------------------
+\chapter{Literature Survey}
+
+\section{Background}
+Carpooling has emerged as an important shared-mobility solution for addressing
+increasing traffic congestion, travel costs, fuel consumption, and
+environmental concerns. It allows people travelling on similar routes and
+schedules to share a vehicle and divide travel expenses. Existing research
+highlights the importance of trust and safety, efficient ride matching, and
+user convenience in encouraging carpooling adoption. Features such as user
+verification, ride history, ratings, and reviews can improve user confidence,
+while route- and time-based matching can help identify suitable rides. Studies
+also indicate that social compatibility, convenience, and financial benefits
+influence the success of ride-sharing systems. However, challenges such as
+trust issues, difficulty in finding suitable co-riders, and limited flexibility
+remain. These observations provide the foundation for developing an
+Intelligent Trust-Aware Carpooling Platform focused on efficient matching,
+secure booking, and improved user trust.
+
+\section{Literature Review}
+
+\subsection{A Timely Match for Ride-Hailing and Ride-Pooling Services Using a Deep Reinforcement Learning Approach (2026)}
+\textbf{Authors:} Yiman Bao, Jie Gao, Jinke He, Frans A. Oliehoek, and Oded Cats
+
+This paper proposes a deep reinforcement learning approach for deciding when
+ride-hailing and ride-pooling requests should be matched. The method formulates
+the matching-timing problem as a Markov Decision Process and uses Proximal
+Policy Optimization to learn matching decisions under changing demand and
+supply. Experiments using Manhattan taxi data reduced total waiting time and
+pooling detour delay compared with fixed and rule-based strategies. However,
+the study does not specifically consider user trust, verification, ratings, or
+reviews in the matching process.
+
+\subsection{Ride-Pool Assignment Algorithms: Swapping Heuristics and Efficient Implementation (2026)}
+\textbf{Authors:} Matthew Zalesak, Hins Hu, and Samitha Samaranayake
+
+This paper presents an open-source ride-pool simulator containing different
+ride-pool assignment algorithms, vehicle routing, and rebalancing components.
+It introduces swapping-based heuristics to improve the balance between
+ride-pooling performance and computational efficiency. Experiments using a
+large-scale Manhattan dataset show that the proposed LA-MR-CE algorithm can
+achieve a high service rate with reduced computational time. However, the
+system mainly focuses on operational ride assignment and does not include trust
+management, user verification, ratings, or reviews.
+
+\subsection{Creating a Trusting Environment in the Sharing Economy: Unpacking Mechanisms for Trust-Building Used by Peer-to-Peer Carpooling Platforms (2025)}
+\textbf{Authors:} Barbara Hartl, Elfriede Penz, and Elke Schuessler
+
+This paper investigates how peer-to-peer carpooling platforms develop trust
+between users. The study examines mechanisms such as review systems, contact
+opportunities, GPS tracking, and other trust-building methods. The findings
+show that different trust mechanisms can influence user confidence and
+participation in carpooling. However, the study focuses mainly on
+trust-building mechanisms and does not combine them with an intelligent
+ride-matching and booking platform.
+\\
+\subsection{Ride-Pool Assignment Algorithms: Modern Implementation and Swapping Heuristics (2025)}
+\textbf{Authors:} Matthew Zalesak, Hins Hu, and Samitha Samaranayake
+
+This paper presents an open-source implementation of a ride-pool simulator for
+studying passenger-vehicle assignment, routing, and rebalancing. It introduces
+swapping-based local-search heuristics to improve ride assignment while
+maintaining computational efficiency. The research provides a useful
+foundation for developing and testing ride-pooling algorithms using real-world
+datasets. However, it does not specifically address trust-aware matching, user
+verification, or reputation-based ride selection.
+
+\subsection{Hyper Pooling Private Trips into High Occupancy Transit-Like Attractive Shared Rides (2024)}
+\textbf{Authors:} Rafa\l{} Kucharski and Oded Cats
+
+This paper proposes a hyper-pooling approach that combines multiple private
+trips into shared rides using common pickup and drop-off points. The method
+focuses on increasing vehicle occupancy while maintaining attractive travel
+options for passengers. Experiments using 2,000 trips in Amsterdam produced 40
+hyper-pooled rides serving 225 travellers and significantly reduced vehicle
+hours compared with individual travel. However, it does not specifically
+address user verification, trust mechanisms, ratings, or reviews.
+
+\vfill
+\section{Analysis Table}
+\small
+\begin{longtable}{|>{\centering\arraybackslash}p{0.7cm}|p{3.6cm}|p{2.8cm}|p{4.1cm}|p{3.8cm}|}
+\caption{Comparative analysis of related work}\label{tab:literature}\\
+\hline
+\textbf{Sr. No.} & \textbf{Paper Title} & \textbf{Author Name} & \textbf{Advantages} & \textbf{Research Gap}\\
+\hline
+\endfirsthead
+
+
+
+
+\endfoot
+\hline
+\endlastfoot
+1 & A Timely Match for Ride-Hailing and Ride-Pooling Services Using a Deep Reinforcement Learning Approach (2026) & Yiman Bao, Jie Gao, Jinke He, Frans A. Oliehoek, Oded Cats & Provides dynamic ride matching and reduces waiting time and pooling detour delay. & Does not specifically include trust, user verification, ratings, or reviews.\\ \hline
+2 & Ride-Pool Assignment Algorithms: Swapping Heuristics and Efficient Implementation (2026) & Matthew Zalesak, Hins Hu, Samitha Samaranayake & Provides efficient ride-pool assignment, routing, and rebalancing. & Does not address trust-aware matching or user reputation.\\ \hline
+3 & Unpacking Mechanisms for Trust-Building Used by Peer-to-Peer Carpooling Platforms (2025) & Barbara Hartl, Elfriede Penz, Elke Schuessler & Examines reviews, contact opportunities, GPS tracking, and other trust-building mechanisms. & Does not combine trust mechanisms with an intelligent ride-matching and booking system.\\ \hline
+4 & Ride-Pool Assignment Algorithms: Modern Implementation and Swapping Heuristics (2025) & Matthew Zalesak, Hins Hu, Samitha Samaranayake & Provides an open-source simulator and matching algorithms for passenger-vehicle assignment and routing. & Does not specifically consider verification, trust scores, ratings, or reviews.\\ \hline
+5 & Hyper Pooling Private Trips into High Occupancy Transit-Like Attractive Shared Rides (2024) & Rafa\l{} Kucharski, Oded Cats & Uses intelligent trip grouping to increase occupancy and reduce vehicle usage. & Does not specifically address trust, verification, ratings, or review-based ride selection.\\ 
+\end{longtable}
+\normalsize
+
+% -----------------------------------------------------------------------------
+\chapter{System Architecture}
+
+\section{Introduction}
+The Intelligent Trust-Aware Carpooling Platform is designed to provide a
+centralized and systematic approach for managing carpooling activities between
+drivers and passengers. The system allows drivers to create and manage rides,
+while passengers can search for suitable rides, view ride details, and submit
+booking requests through a single platform. The system is designed with
+separate functionalities for passengers and drivers, with access based on
+their roles. It includes ride creation, ride searching, intelligent ride
+matching, booking management, ride status updates, notifications, and ratings
+and reviews to improve trust and reliability among users.
+
+\section{Design}
+
+\subsection{Requirement Analysis}
+\subsubsection*{Hardware Requirements}
+The system requires a standard computing environment to access and operate the
+web application smoothly. It should support web browsing, data processing,
+database operations, ride management, booking, and user interactions for
+drivers and passengers.
+
+\begin{table}[H]
+\centering
+\caption{Hardware requirements}
+\begin{tabularx}{0.92\textwidth}{|>{\bfseries}p{0.29\textwidth}|X|}
+\hline
+Component & \textbf{Specification / Description}\\
+\hline
+Computer / Laptop & Used for development, deployment, and testing of the system.\\
+\hline
+Processor & Intel Core i5 or higher (Intel Core i7 recommended for faster computation).\\
+\hline
+RAM & Minimum 8 GB; 16 GB preferred for larger datasets.\\
+\hline
+Storage & 256 GB SSD or higher for storing reports, processed documents, and data files.\\
+\hline
+Internet Connectivity & Required for database access, real-time API integration, and application operation.\\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsubsection*{Software Requirements}
+The software stack for the Intelligent Trust-Aware Carpooling Platform
+integrates modern web technologies, a database management system, and backend
+frameworks to support efficient data handling, user authentication, ride
+management, booking, and ride matching. The system uses the MERN stack,
+consisting of MongoDB, Express.js, React.js, and Node.js, along with supporting
+technologies for secure communication, API handling, and user-interface
+development.
+
+\begin{table}[H]
+\centering
+\caption{Software requirements}
+\begin{tabularx}{0.92\textwidth}{|>{\bfseries}p{0.31\textwidth}|X|}
+\hline
+Category & \textbf{Specification / Tools Used}\\
+\hline
+Operating System & Windows 10/11 or Ubuntu Linux 20.04+\\
+\hline
+Frontend Framework & React.js with Tailwind CSS and Vite for a responsive and fast interface.\\
+\hline
+Backend Language & Node.js and Express.js.\\
+\hline
+Web Framework / API & Flask or FastAPI for backend communication with the frontend.\\
+\hline
+Development IDE & Visual Studio Code.\\
+\hline
+Visualization Tools & Chart.js, React Charts, and related tools for graphical representation.\\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{System Architecture}
+The system architecture is divided into three main layers: Client Layer,
+Application Layer, and Data Storage Layer. The Client Layer provides the user
+interface for login, registration, searching rides, and joining rides. It
+communicates with the Application Layer through HTTP/REST requests. The
+Application Layer manages important system functions such as user management,
+ride management, ride matching, and booking management. The Ride Matching
+module helps identify suitable rides based on user requirements. The
+Application Layer communicates with the Data Storage Layer using Mongoose ODM
+for storing and retrieving data. The Data Storage Layer stores information
+related to users, rides, bookings, and reviews. The retrieved data is returned
+to the Application Layer as a data response and then provided to the client in
+JSON format. This layered architecture provides a structured and efficient way
+to manage user interaction, application processing, and data storage.
+
+\fullfigure[0.78\textwidth]{image2.png}{System architecture of the Intelligent Trust-Aware Carpooling Platform}
+
+\subsection{Proposed System}
+The proposed system provides a web-based carpooling platform that connects
+drivers and passengers for shared travel. Users first select their user type
+and then either create a ride as a driver or search for a suitable ride as a
+passenger. Drivers and passengers enter details such as source, destination,
+travel time, available seats, and preferences. The system performs ride
+matching to identify suitable rides based on the provided requirements.
+Passengers can request or book a matched ride, and the driver can accept or
+reject the request. If the request is accepted, the passenger can join and
+complete the ride. After completing the ride, users can provide ratings and
+reviews. The system stores user, ride, booking, and review information in the
+database and provides outputs such as matched rides, booking results, ride
+completion, and user ratings.
+
+\fullfigure[0.92\textwidth]{image3.png}{Proposed System of Intelligent Trust-Aware Carpooling Platform}
+
+% -----------------------------------------------------------------------------
+\chapter{System Design}
+
+\section{Introduction}
+The Intelligent Trust-Aware Carpooling Platform is designed as a centralized
+web-based system for managing shared rides between drivers and passengers. The
+system provides different functionalities for drivers and passengers,
+including ride creation, ride searching, ride matching, booking management,
+and ride status updates. It also includes user authentication, profile
+management, booking requests, notifications, and ratings and reviews to support
+trust between users. The system follows a layered web application architecture,
+consisting of the Client Layer, Application Layer, and Data Storage Layer. The
+frontend provides the user interface, while the application layer handles user
+management, ride management, ride matching, and booking operations. MongoDB is
+used for storing user, ride, booking, and review data, with Mongoose ODM used
+for database communication.
+
+\section{UML Diagrams}
+The Unified Modeling Language (UML) is a standardized approach used to
+visualize the design of a system. It helps in understanding system behavior,
+relationships between modules, and the overall flow of control. This section
+presents sequence, class, activity, and entity-relationship diagrams for the
+Intelligent Trust-Aware Carpooling Platform.
+
+\subsection{Sequence Diagram}
+The sequence diagram represents the interaction between the Passenger, Driver,
+Ride, Booking, and Notification components. The Passenger and Driver can log
+in or register, while the Driver can create a ride and the Passenger can search
+for available rides. The Passenger submits a booking request, which is
+processed by the Booking component and accepted or rejected by the Driver.
+Notifications are sent to the Driver and Passenger regarding booking status
+and review activities. After completing the ride, the Passenger can provide a
+rating or review, which is submitted through the Booking component and
+notified to the Driver.
+
+\fullfigure[0.94\textwidth]{image4.png}{Sequence diagram of the Intelligent Trust-Aware Carpooling Platform}
+
+\vfill
+\subsection{Class Diagram}
+The class diagram represents the main classes and their relationships,
+including User, Driver, Passenger, Ride, Booking, Review, Payment, and
+Notification. Each class contains relevant attributes and operations required
+to manage users, rides, bookings, reviews, payments, and notifications. The
+relationships and multiplicities show how the classes interact.
+
+\fullfigure[0.92\textwidth]{image5.png}{Class diagram of the Intelligent Trust-Aware Carpooling Platform}
+
+\vfill
+\subsection{Activity Diagram}
+The activity diagram represents the complete carpooling process from user
+login to ride completion. It includes credential verification, user-type
+selection, ride creation or ride searching, and ride matching. After a suitable
+ride is found, the passenger can request or book the ride, and the driver can
+accept or reject the request. If accepted, the ride is completed and the user
+can provide a rating or review before the process ends.
+
+\fullfigure[0.73\textwidth]{image6.png}{Activity diagram of the Intelligent Trust-Aware Carpooling Platform}
+
+\vfill
+\subsection{Entity-Relationship Diagram}
+The entity-relationship diagram represents the main entities of the system:
+Passenger, Driver, Ride, Booking, and Review. The Passenger entity stores user
+details, preferences, and address information, while the Driver entity contains
+driver and vehicle details. The Ride entity stores source, destination, date,
+time, seat availability, and status, and is created by the Driver. The Booking
+entity manages booking details, pickup and drop-off locations, seats booked,
+and booking status. The Review entity stores ratings, comments, and review
+dates. Relationships such as Makes, Creates, Has, and Receives show how the
+entities are connected.
+
+\fullfigure[0.93\textwidth]{image7.png}{Entity-relationship diagram of the Intelligent Trust-Aware Carpooling Platform}
+
+% -----------------------------------------------------------------------------
+
+\chapter{Result and Discussion}
+
+This chapter presents the outcomes obtained from the implementation of the
+Intelligent Trust-Aware Carpooling Platform. It discusses the usability,
+performance, reliability, and overall effectiveness of the system for the
+Passenger, Driver, and Admin roles. The system was evaluated for its ability to
+manage rides efficiently, provide suitable ride matching, handle booking
+requests, and maintain accurate ride and booking records. Passengers can
+search for rides, view ride details, make bookings, cancel bookings, and
+provide ratings and reviews. Drivers can create and manage rides, view booking
+requests, accept or reject bookings, and complete rides. Administrators can
+manage users, rides, bookings, and reviews to support proper system
+administration.
+
+\vfill
+\section{Landing Page}
+The landing page provides the main introduction to the carpooling platform and
+allows users to start their journey by finding or offering a ride. It displays
+options to enter the source, destination, travel date, and required seats for
+searching suitable rides.
+
+\fullfigure[0.95\textwidth]{image8.png}{Landing page of the Intelligent Trust-Aware Carpooling Platform}
+
+\section{Ride Search Page}
+This page allows passengers to search for available rides based on their
+travel requirements. It provides fields for pickup place, destination, travel
+date, departure time, and required seats. The Find Available Rides option helps
+users search for suitable rides according to the entered details.
+
+\fullfigure[0.95\textwidth]{image9.png}{Ride Search page of the Intelligent Trust-Aware Carpooling Platform}
+
+\section{Create Ride Page}
+This page allows drivers to create and publish a new ride by entering the
+pickup place and destination. It provides options to select the departure date,
+departure time, available seats, luggage space, and ride preferences. The
+driver can also add ride notes and publish the ride for passengers to find and
+book.
+
+\fullfigure[0.83\textwidth]{image10.png}{Create Ride page of the Intelligent Trust-Aware Carpooling Platform}
+
+\vfill
+\section{Ride Details and Booking Page}
+This page displays detailed information about the selected ride, including the
+driver, route, departure time, available seats, luggage, and smoking
+preferences. It provides an interactive seat-selection option that allows
+passengers to choose their preferred seat.
+
+\fullfigure[0.78\textwidth]{image11.png}{Ride Details and Booking page of the Intelligent Trust-Aware Carpooling Platform}
+
+\vfill
+\section{Driver Dashboard}
+The Driver Dashboard allows drivers to manage their created rides and monitor
+upcoming or active journeys. It displays ride information such as route, date,
+time, available seats, and pending booking requests. Drivers can create, edit,
+start, cancel, and manage passengers for their rides.
+
+\fullfigure[0.75\textwidth]{image12.png}{Driver Dashboard of the Intelligent Trust-Aware Carpooling Platform}
+
+% -----------------------------------------------------------------------------
+\chapter{Conclusion and Future Scope}
+
+\section{Conclusion}
+The Intelligent Trust-Aware Carpooling Platform successfully provides a
+web-based solution for connecting drivers and passengers travelling on similar
+routes and schedules. The system allows users to create, search, match, and
+manage rides efficiently. Passengers can view suitable rides and submit
+booking requests, while drivers can accept or reject requests and manage their
+rides. The platform also provides booking-status updates and notifications for
+important activities. Ratings and reviews help improve trust and reliability
+among users. Secure authentication and role-based access support controlled
+system usage. The MERN-based platform provides a simple and convenient
+interface for managing carpooling activities. The system maintains important
+information such as user details, ride details, bookings, and reviews in the
+database. It provides separate functionalities for passengers, drivers, and
+administrators according to their roles. The ride-management and booking
+features make the overall process more organized and convenient. The platform
+can help reduce travel costs and improve the utilization of available vehicle
+seats. It can also contribute to reducing unnecessary vehicle usage and
+traffic congestion.
+
+\section{Future Scope}
+Real-time GPS tracking can be added to allow passengers and drivers to monitor
+the ride location. In-app chat and real-time communication can be introduced
+for better coordination between users. Advanced ride-matching techniques can
+provide more accurate matches based on routes, time, preferences, and user
+ratings. Online payment facilities can be integrated for secure and convenient
+fare management. Driver and passenger verification can be further improved to
+increase trust and safety. Emergency or SOS features can also be added to
+improve passenger safety. Mobile applications can be developed for Android and
+iOS platforms. AI-based recommendations can suggest suitable rides based on
+previous travel patterns. Analytics and reports can help administrators
+monitor system activities and performance. These enhancements can make the
+platform more intelligent, secure, reliable, and convenient for shared
+transportation.
+
+% -----------------------------------------------------------------------------
+\clearpage
+{
+\titlespacing*{\chapter}{0pt}{0cm}{1cm}
+\chapter*{References}
+}
+\addcontentsline{toc}{chapter}{References}
+\begin{enumerate}[label={[\arabic*]},leftmargin=2.1em,itemsep=0.7em]
+\item Y. Bao, J. Gao, J. He, F. A. Oliehoek, and O. Cats, ``A timely match for
+ride-hailing and ride-pooling services using a deep reinforcement learning
+approach,'' \textit{Transportation Research Part C: Emerging Technologies},
+vol. 187, Art. no. 105644, 2026.
+
+\item M. Afsari, S. Salehi, L. M. Bresciani Miristice, and G. Gentile,
+``Security perceptions in ride-sharing services: Influencing factors and
+effective solutions,'' \textit{Research in Transportation Economics}, vol.
+115, Art. no. 101689, 2026.
+
+\item R. Yan, Y. Chen, B. Liu, and X. Wang, ``Promoting carpooling on
+car-hailing platforms: Order allocation and motivating subsidy,''
+\textit{Transportation Research Part B: Methodological}, vol. 199, Art. no.
+103282, 2025.
+
+\item B. Hartl, E. Penz, and E. Schuessler, ``Creating a trusting environment
+in the sharing economy: Unpacking mechanisms for trust-building used by
+peer-to-peer carpooling platforms,'' \textit{Journal of Cleaner Production},
+vol. 489, Art. no. 144661, 2025.
+
+\item M. Zalesak, H. Hu, and S. Samaranayake, ``Ride-Pool Assignment
+Algorithms: Modern Implementation and Swapping Heuristics,'' \textit{arXiv
+preprint arXiv:2504.10649}, 2025.
+\end{enumerate}
+
+% -----------------------------------------------------------------------------
+\clearpage
+{
+\titlespacing*{\chapter}{0pt}{0cm}{1cm}
+\chapter*{Acknowledgement}
+}
+\addcontentsline{toc}{chapter}{Acknowledgement}
+We would like to take this opportunity to express our gratitude towards all the people who have in various ways, helped in the successful completion of our project.
+
+We must convey our gratitude to our honourable director sir \textbf{Dr. N. K. Rana} for giving us the constant source of inspiration throughout the project. We extend are gratitude our respected Principal Sir \textbf{Dr. Riyazoddin Siddiqui} and our HOD and Project guide \textbf{Prof. Sneha Sankhe} for their invaluable guidance, support and help in preparing the project, personally correcting our work and providing encouragement throughout the project. Additionally, we extend our appreciation to all the teaching staff, whose profound knowledge, passion for teaching, and dedication to students learning have been a constant source of inspiration and motivation. We are also thankful to all the non teaching staff, for their behind the scenes efforts in maintaining the infrastructure, administrative support, and logistical assistance that contributed to the project’s success. We would also like to thank our parents, whose unwavering love, encouragement, and sacrifices have been the cornerstone of our journey. Their belief in our abilities and endless support have been a constant source of strength and motivation. Finally, we are grateful to our family and friends, for their understanding, encouragement, and unwavering support throughout this endeavour.
+
+We also thank all my faculty members for steering me through the tough as well as easy phases of the project in a result-oriented manner with concern attention.
+
+
+\vfill
+\begin{flushright}
+Harshit Arekar (233101)\\[0.4em]
+Ayush Bari (233103)\\[0.4em]
+Hardik Dadode (233106)\\[0.4em]
+Gaurav Gunjal (233108)
+\end{flushright}
+
+\end{document}

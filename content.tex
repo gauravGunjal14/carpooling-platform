@@ -1,0 +1,157 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage[a4paper,top=22mm,bottom=20mm,left=27mm,right=25mm]{geometry}
+\usepackage{array,tabularx}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\pagenumbering{roman}
+\setlength{\parindent}{0pt}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.42}
+
+\newcolumntype{N}{>{\raggedright\arraybackslash}p{2.5cm}}
+\newcolumntype{C}{>{\raggedright\arraybackslash}X}
+\newcolumntype{P}{>{\centering\arraybackslash}p{1.8cm}}
+
+\newcommand{\pageheading}[1]{%
+  \begin{center}
+    {\Large\bfseries #1}
+  \end{center}
+  \vspace{0.55cm}}
+
+\newcommand{\chapterrow}[3]{%
+  \textbf{#1} & \textbf{#2} & #3\\}
+
+\newcommand{\sectionrow}[3]{%
+  \hspace{1.8cm}#1 & #2 & #3\\}
+
+\newcommand{\subsectionrow}[3]{%
+  & \hspace{0.5cm}#1\quad #2 & #3\\}
+
+\begin{document}
+
+% -----------------------------------------------------------------------------
+% Page i -- List of Contents, first page
+% -----------------------------------------------------------------------------
+\pageheading{List of Contents}
+
+\begin{tabularx}{\textwidth}{@{}N C P@{}}
+\textbf{Sr. No.} & \centering\arraybackslash\textbf{Contents} & \textbf{Page No.}\\
+& List of contents & i\\
+& List of Figures & iii\\
+& List of Tables & iv\\
+& Abbreviations & v\\
+\chapterrow{Chapter -1}{Introduction}{1}
+\sectionrow{1.1}{An overview}{1}
+\sectionrow{1.2}{Motivation}{2}
+\sectionrow{1.3}{Problem Definition}{2}
+\sectionrow{1.4}{Aim of Project}{2}
+\sectionrow{1.5}{Scope of Project}{2}
+\chapterrow{Chapter -2}{Literature Review}{3}
+\sectionrow{2.1}{Background}{3}
+\sectionrow{2.2}{Literature Review}{4}
+\sectionrow{2.3}{Analysis Table}{6}
+\chapterrow{Chapter -3}{System Architecture and Design}{7}
+\sectionrow{3.1}{Introduction}{7}
+\sectionrow{3.2}{Design}{8}
+\subsectionrow{3.2.1}{Requirement Analysis}{8}
+\subsectionrow{3.2.2}{System Architecture}{9}
+\subsectionrow{3.2.3}{Proposed System}{10}
+\chapterrow{Chapter -4}{System Design}{11}
+\sectionrow{4.1}{Introduction}{11}
+\sectionrow{4.2}{UML Diagrams}{12}
+\subsectionrow{4.2.1}{Sequence Diagram}{12}
+\subsectionrow{4.2.2}{Class Diagram}{13}
+\subsectionrow{4.2.3}{Activity diagram}{14}
+\subsectionrow{4.2.4}{ER Model}{15}
+\end{tabularx}
+
+% -----------------------------------------------------------------------------
+% Page ii -- List of Contents, continuation
+% -----------------------------------------------------------------------------
+\clearpage
+\vspace*{-0.6cm}
+\begin{tabularx}{\textwidth}{@{}N C P@{}}
+\chapterrow{Chapter -5}{Result and Discussion}{16}
+\sectionrow{5.1}{Landing Page}{17}
+\sectionrow{5.2}{Ride Search Page}{17}
+\sectionrow{5.3}{Create Ride Page}{18}
+\sectionrow{5.4}{Ride Details and Booking Page}{19}
+\sectionrow{5.5}{Driver Dashboard}{20}
+\chapterrow{Chapter -6}{Conclusion and Future Scope}{21}
+\sectionrow{6.1}{Conclusion}{21}
+\sectionrow{6.2}{Future Scope}{22}
+& \textbf{References} & 23\\
+& \textbf{Acknowledgement} & 24\\
+\end{tabularx}
+
+% -----------------------------------------------------------------------------
+% Page iii -- List of Figures
+% -----------------------------------------------------------------------------
+\clearpage
+\pageheading{List of Figures}
+
+\begin{tabularx}{\textwidth}{@{}N >{\centering\arraybackslash}X P@{}}
+\textbf{Sr. No.} & \textbf{Figures} & \textbf{Page No.}\\[0.4em]
+Fig. 3.1 & System Architecture & 9\\[0.4em]
+Fig. 3.2 & Proposed System & 10\\[0.4em]
+Fig. 4.1 & Sequence Diagram & 12\\[0.4em]
+Fig. 4.2 & Class Diagram & 13\\[0.4em]
+Fig. 4.3 & Activity Diagram & 14\\[0.4em]
+Fig. 4.4 & ER Diagram & 15\\[0.4em]
+Fig. 5.1 & Landing Page & 17\\[0.4em]
+Fig. 5.2 & Ride Search Page & 17\\[0.4em]
+Fig. 5.3 & Create Ride Page & 18\\[0.4em]
+Fig. 5.4 & Ride Details and Booking Page & 19\\[0.4em]
+Fig. 5.5 & Driver Dashboard & 20\\
+\end{tabularx}
+
+% -----------------------------------------------------------------------------
+% Page iv -- List of Tables
+% -----------------------------------------------------------------------------
+\clearpage
+\pageheading{List of Tables}
+
+\begin{tabularx}{\textwidth}{@{}N >{\centering\arraybackslash}X P@{}}
+\textbf{Sr. No.} & \textbf{Tables} & \textbf{Page No.}\\[0.4em]
+Table 2.1 & Analysis table & 6\\[0.4em]
+Table 3.1 & Hardware Requirement & 8\\[0.4em]
+Table 3.2 & Software Requirement & 9\\
+\end{tabularx}
+
+% -----------------------------------------------------------------------------
+% Page v -- Abbreviations
+% -----------------------------------------------------------------------------
+\clearpage
+\pageheading{Abbreviations}
+
+\vspace{0.25cm}
+\begin{spacing}{1.35}
+\textbf{API: Application Programming Interface}\par
+\vspace{0.35cm}
+\textbf{UI: User Interface}\par
+\vspace{0.35cm}
+\textbf{OS: Operating System}\par
+\vspace{0.35cm}
+\textbf{CPU: Central Processing Unit}\par
+\vspace{0.35cm}
+\textbf{RAM: Random Access Memory}\par
+\vspace{0.35cm}
+\textbf{SSD: Solid State Drive}\par
+\vspace{0.35cm}
+\textbf{JSON: JavaScript Object Notation}\par
+\vspace{0.35cm}
+\textbf{UML: Unified Modeling Language}\par
+\vspace{0.35cm}
+\textbf{GUI: Graphical User Interface}\par
+\end{spacing}
+
+\end{document}
