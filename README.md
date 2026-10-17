@@ -241,3 +241,7 @@ carpooling-platform/
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+## Project Contributors
+
+- Harshit Arekar - Project
+contribution
